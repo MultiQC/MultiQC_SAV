@@ -6,7 +6,7 @@ to generate the most used tables and graphs from the Illumina SAV
 
 from setuptools import setup, find_packages
 
-version = "0.1"
+version = "0.0.1"
 
 setup(
     name="multiqc_sav",
@@ -22,7 +22,7 @@ setup(
     include_package_data=True,
     install_requires=["interop>=1.1.23", "multiqc>=1.10"],
     entry_points={
-        "multiqc.hooks.v1": ["after_modules = multiqc_sav.multiqc_sav:MultiQC_SAV",],
+        "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
         "multiqc.cli_options.v1": ["illumina_dir = multiqc_sav.cli:illumina_dir",],
     },
     classifiers=[
