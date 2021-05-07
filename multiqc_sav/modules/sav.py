@@ -12,6 +12,178 @@ from multiqc.plots import table
 # Initialise the main MultiQC logger
 log = logging.getLogger("multiqc")
 
+HEADERS = {
+    "Error Rate": {
+        "title": "Error Rate (%)",
+        "description": "The calculated error rate, as determined by a PhiX spike-in",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "Error Rate 35": {
+        "title": "Error Rate 35 Cycles (%)",
+        "description": "The calculated error rate for cycles 1-35.",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+        "hidden": True,
+    },
+    "Error Rate 50": {
+        "title": "Error Rate 35 Cycles (%)",
+        "description": "The calculated error rate for cycles 1-50.",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+        "hidden": True,
+    },
+    "Error Rate 75": {
+        "title": "Error Rate 35 Cycles (%)",
+        "description": "The calculated error rate for cycles 1-75.",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+        "hidden": True,
+    },
+    "Error Rate 100": {
+        "title": "Error Rate 100 Cycles (%)",
+        "description": "The calculated error rate for cycles 1-100.",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+        "hidden": True,
+    },
+    "First Cycle Intensity": {
+        "title": "Intensity Cycle 1",
+        "description": "The average of the A channel intensity measured at the first cycle",
+    },
+    "% Aligned": {
+        "title": "Aligned (%)",
+        "description": "Percentage of reads that aligned to the PhiX genome",
+        "suffix": "%",
+        "min": 0,
+        "max": 100,
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "% >= Q30": {
+        "title": "% >= Q30",
+        "description": "Percentage of reads with quality phred score of 30 or above",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "% Occupancy Proxy": {
+        "title": "Occupancy Proxy (%)",
+        # "description": "",
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "% Occupied": {
+        "title": "Occupied (%)",
+        "description": "The percentage of nanowells occupied by clusters, +/- 1 standard deviation.",
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "Projected Yield G": {
+        "title": "Projected Yield ({})".format(config.base_count_prefix),
+        "description": "The expected number of bases sequenced ({} base pairs over all 'usable cycles'".format(
+            config.base_count_desc
+        ),
+        "shared_key": "base_count",
+        "modify": lambda x: (x * 1000000000.0)
+        * config.base_count_multiplier,  # number is already in gigabases
+    },
+    "Yield G": {
+        "title": "Yield ({})".format(config.base_count_prefix),
+        "description": "The number of bases sequenced ({} base pairs over all 'usable cycles'".format(
+            config.base_count_desc
+        ),
+        "shared_key": "base_count",
+        "modify": lambda x: (x * 1000000000.0)
+        * config.base_count_multiplier,  # number is already in gigabases
+    },
+    "Cluster Count": {
+        "title": "Cluster Count",
+        "description": "Number of clusters for each tile",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "Cluster Count Pf": {
+        "title": "Cluster Count PF",
+        "description": "Number of clusters PF for each tile",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "% Pf": {
+        "title": "Reads PF (%)",
+        "description": "Percentage of clusters Passing Filter",
+        "min": 0,
+        "max": 100,
+        "suffix": "%",
+        "format": "{:,.0f}",  # No decimal places please
+    },
+    "Density": {
+        "title": "Density",
+        "description": "The density of clusters (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "hidden": True,
+    },
+    "Density Pf": {
+        "title": "Density PF",
+        "description": "The density of clusters PF (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "hidden": True,
+    },
+    "Phasing": {
+        "title": "Phasing",
+        "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing falls behind (phasing) the current cycle within a read.",
+    },
+    "Phasing Offset": {
+        "title": "Phasing Offset",
+        "description": "The best-fit offset of the phasing corrections, calculated from the entire read.",
+        "hidden": True,
+    },
+    "Phasing Slope": {
+        "title": "Phasing Slope",
+        "description": "The best-fit slope of the phasing corrections, calculated from the entire read.",
+        "hidden": True,
+    },
+    "Prephasing": {
+        "title": "Prephasing",
+        "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing jumps ahead (prephasing) the current cycle within a read.",
+    },
+    "Prephasing Offset": {
+        "title": "Prephasing Offset",
+        "description": "The best-fit offset of the prephasing corrections, calculated from the entire read.",
+        "hidden": True,
+    },
+    "Prephasing Slope": {
+        "title": "Prephasing Slope",
+        "description": "The best-fit slope of the prephasing corrections, calculated from the entire read.",
+        "hidden": True,
+    },
+    "Reads": {
+        "title": "{} Reads".format(config.read_count_prefix),
+        "description": "The number of reads ({})".format(config.read_count_desc),
+        "shared_key": "read_count",
+        "modify": lambda x: x * config.read_count_multiplier,
+    },
+    "Reads Pf": {
+        "title": "{} PF Reads".format(config.read_count_prefix),
+        "description": "The number of passing filter reads ({})".format(
+            config.read_count_desc
+        ),
+        "shared_key": "read_count",
+        "modify": lambda x: x * config.read_count_multiplier,
+    },
+    "Tile Count": {
+        "title": "Tiles",
+        "description": "The number of tiles per lane.",
+        "hidden": True,
+    },
+}
+
 
 class SAV(BaseMultiqcModule):
     """
@@ -43,37 +215,38 @@ class SAV(BaseMultiqcModule):
 
         self.load_metrics()
         self.summary_qc()
-        self.indexing_qc()
+        # self.indexing_qc()
         self.imaging_qc()
 
     def load_metrics(self):
-        log.debug("SAV: Loading run metrics from {}".format(self.illumina_dir))
+        log.info("Loading run metrics from {}".format(self.illumina_dir))
         self.run_metrics = interop.read(run=self.illumina_dir)
 
     def summary_qc(self):
-        log.info("SAV: Gathering Read summary metrics")
+        log.info("Gathering Read summary metrics")
         summary_read = pd.DataFrame(interop.summary(self.run_metrics, level="Read"))
-        self.parse_read_summary(summary_read)
+        summary_nonindex = pd.DataFrame(
+            interop.summary(self.run_metrics, level="NonIndex")
+        )
+        summary_total = pd.DataFrame(interop.summary(self.run_metrics, level="Total"))
 
         self.add_section(
             name="Summary Read Metrics",
             anchor="sav-read-summary",
             description="Summary metrics per Read",
+            plot=self.read_summary_table(
+                self.parse_read_summary(summary_read, summary_nonindex, summary_total)
+            ),
         )
 
-        log.info("SAV: Gathering Lane summary metrics")
-        summary_lane = (
-            pd.DataFrame(interop.summary(self.run_metrics, level="Lane"))
-            .transpose()
-            .to_dict()
-        )
-        headers = {key: {} for key in interop.summary_columns(level="Lane")}
+        log.info("Gathering Lane summary metrics")
+        summary_lane = pd.DataFrame(interop.summary(self.run_metrics, level="Lane"))
 
         self.add_section(
             name="Summary Lane Metrics",
             anchor="sav-lane-summary",
             description="Summary metrics per Lane per Read",
-            plot=table.plot(summary_lane, headers),
+            plot=self.lane_summary_table(self.parse_lane_summary(summary_lane)),
         )
 
     def indexing_qc(self):
@@ -117,80 +290,58 @@ class SAV(BaseMultiqcModule):
             name="Imaging Metrics", anchor="sav-imaging", description="",
         )
 
-    def parse_read_summary(self, metrics):
-        # format pandas dataframe
-        metrics.set_index("ReadNumber").transpose()
-        parsed_metrics = {}
-        for read_number, read_data in metrics.iterrows():
-            metrics.at[read_number, "IsIndex"] = (
-                False if read_data["IsIndex"] == 89 else True
-            )
-        print(metrics)
+    def parse_read_summary(self, read_metrics, non_index_metrics, total_metrics):
+        table_data: dict = self._parse_reads(read_metrics)
 
-    # def parse_lane_summary(self, metrics):
-    #     print("test")
+        for read, data in non_index_metrics.iterrows():
+            table_data["Non-Indexed"] = data.to_dict()
 
-    # def parse_lane_indexing(self, metrics):
-    #     print("test")
+        for read, data in total_metrics.iterrows():
+            table_data["Total"] = data.to_dict()
 
-    # def parse_barcode_indexing(self, metrics):
-    #     print("test")
+        return table_data
 
-    def summary_read_table(self, data):
-        headers = interop.summary_columns()
-        headers = OrderedDict()
-        headers["Yield"] = {
-            "rid": "summary_Yield",
-            "title": "{}p Yield".format(config.base_count_prefix),
-            "description": 'The number of bases sequenced ({} base pairs over all "usable cycles"'.format(
-                config.base_count_desc
-            ),
-            "scale": "PuOr",
-            "shared_key": "base_count",
-            "modify": lambda x: (x * 1000000000.0)
-            * config.base_count_multiplier,  # number is already in gigabases
+    def read_summary_table(self, data):
+        headers = {
+            header: HEADERS[header] for header in interop.summary_columns(level="Lane")
         }
-        headers["Aligned"] = {
-            "rid": "summary_Aligned",
-            "title": "Aligned (%)",
-            "description": "The percentage of the sample that aligned to the PhiX genome",
-            "min": 0,
-            "max": 100,
-            "suffix": "%",
-            "scale": "PiYG",
+
+        table_config = {
+            "namespace": "SAV",
+            "id": "sav-read-metrics-summary-table",
+            "col1_header": "Read",
         }
-        headers["Error Rate"] = {
-            "title": "Error Rate (%)",
-            "description": "",
-            "min": 0,
-            "max": 100,
-            "suffix": "%",
-            "scale": "OrRd",
-        }
-        headers["Intensity C1"] = {
-            "rid": "summary_Intensity_C1",
-            "title": "Intensity Cycle 1",
-            "description": "The intensity statistic at cycle 1.",
-        }
-        headers["%>=Q30"] = {
-            "rid": "summary_Q30",
-            "title": "% >= Q30",
-            "description": "Percentage of reads with quality phred score of 30 or above",
-            "min": 0,
-            "max": 100,
-            "suffix": "%",
-            "scale": "RdYlGn",
+
+        return table.plot(data, headers, table_config)
+
+    def parse_lane_summary(self, data):
+        lanes = data.groupby("Lane")
+        table_data: dict = {}
+        for lane, reads in lanes:
+            lane_data = {}
+            reads_dict = self._parse_reads(reads, key_prefix=f"Lane {lane}")
+            table_data.update(reads_dict)
+
+        return table_data
+
+    def lane_summary_table(self, data):
+        headers = {
+            header: HEADERS[header] for header in interop.summary_columns(level="Lane")
         }
         table_config = {
-            "namespace": "interop",
-            "id": "interop-runmetrics-summary-table",
-            "table_title": "Read metrics summary",
-            "col1_header": "Run - Read",
+            "namespace": "SAV",
+            "id": "sav-lane-metrics-summary-table",
+            "col1_header": "Lane - Read",
         }
 
-        tdata = {}
-        for s_name in data:
-            for key in data[s_name]["summary"]:
-                tdata["{} - {}".format(s_name, key)] = data[s_name]["summary"][key]
+        return table.plot(data, headers, table_config,)
 
-        return table.plot(tdata, headers, table_config)
+    def _parse_reads(self, reads_df, key_prefix: str = None):
+        reads_dict = {}
+        reads_df = reads_df.set_index("ReadNumber")
+        for read, data in reads_df.iterrows():
+            key = f"Read {read}" + " (I)" if data["IsIndex"] == 89 else f"Read {read}"
+            if key_prefix:
+                key = f"{key_prefix} - {key}"
+            reads_dict[key] = data.drop("IsIndex").to_dict()
+        return reads_dict

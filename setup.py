@@ -20,7 +20,7 @@ setup(
     license="MIT",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=["interop>=1.1.23", "multiqc>=1.10"],
+    install_requires=["interop>=1.1.23", "multiqc>=1.10", "pandas"],
     entry_points={
         "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
         "multiqc.cli_options.v1": ["illumina_dir = multiqc_sav.cli:illumina_dir",],
