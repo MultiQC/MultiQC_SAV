@@ -182,6 +182,19 @@ HEADERS = {
         "description": "The number of tiles per lane.",
         "hidden": True,
     },
+    "Mapped Reads Cv": {},
+    "Max Mapped Reads": {},
+    "Min Mapped Reads": {},
+    "Total Fraction Mapped Reads": {},
+    "Total Pf Reads": {},
+    "Total Reads": {},
+    "Cluster Count": {},
+    "Fraction Mapped": {},
+    "Id": {},
+    "Index1": {},
+    "Index2": {},
+    "Project Name": {},
+    "Sample Id": {},
 }
 
 
@@ -215,12 +228,12 @@ class SAV(BaseMultiqcModule):
 
         self.load_metrics()
         self.summary_qc()
-        # self.indexing_qc()
-        self.imaging_qc()
+        self.indexing_qc()
+        # self.imaging_qc()
 
     def load_metrics(self):
         log.info("Loading run metrics from {}".format(self.illumina_dir))
-        self.run_metrics = interop.read(run=self.illumina_dir)
+        self.run_metrics = interop.read(run=self.illumina_dir, finalize=True)
 
     def summary_qc(self):
         log.info("Gathering Read summary metrics")
@@ -247,47 +260,6 @@ class SAV(BaseMultiqcModule):
             anchor="sav-lane-summary",
             description="Summary metrics per Lane per Read",
             plot=self.lane_summary_table(self.parse_lane_summary(summary_lane)),
-        )
-
-    def indexing_qc(self):
-        try:
-            log.info("SAV: Gathering Lane Indexing metrics")
-            indexing_lane_summary = (
-                pd.DataFrame(interop.indexing(self.run_metrics, level="Lane"))
-                .transpose()
-                .to_dict()
-            )
-
-            self.add_section(
-                name="Indexing Lane Metrics",
-                anchor="sav-lane-index",
-                description="Indexing metrics per Lane",
-                plot=table.plot(indexing_lane_summary),
-            )
-
-            log.info("SAV: Gathering Barcode Indexing metrics")
-            indexing_barcode_summary = (
-                pd.DataFrame(interop.indexing(self.run_metrics, level="Barcode"))
-                .transpose()
-                .to_dict()
-            )
-
-            self.add_section(
-                name="Indexing Barcode Metrics",
-                anchor="sav-barcode-index",
-                description="Indexing metrics per Barcode",
-                plot=table.plot(indexing_barcode_summary),
-            )
-
-        except ValueError:
-            log.debug("SAV: No indexing metrics available")
-
-    def imaging_qc(self):
-        log.debug("SAV: Gathering Imaging metrics")
-        imaging = pd.DataFrame(interop.imaging(self.run_metrics))
-
-        self.add_section(
-            name="Imaging Metrics", anchor="sav-imaging", description="",
         )
 
     def parse_read_summary(self, read_metrics, non_index_metrics, total_metrics):
@@ -335,6 +307,71 @@ class SAV(BaseMultiqcModule):
         }
 
         return table.plot(data, headers, table_config,)
+
+    def indexing_qc(self):
+        log.info("Gathering Lane Indexing metrics")
+        index_summary_lane = pd.DataFrame(
+            interop.index_summary(self.run_metrics, level="Lane")
+        )
+        self.add_section(
+            name="Indexing Lane Metrics",
+            anchor="sav-lane-index",
+            description="Indexing metrics per Lane",
+            plot=self.lane_index_summary_table(
+                self.parse_lane_index_summary(index_summary_lane)
+            ),
+        )
+
+        log.info("Gathering Barcode Indexing metrics")
+        indes_summar_barcode = pd.DataFrame(
+            interop.indexing(self.run_metrics, level="Barcode")
+        )
+
+        # self.add_section(
+        #     name="Indexing Barcode Metrics",
+        #     anchor="sav-barcode-index",
+        #     description="Indexing metrics per Barcode",
+        #     plot=lane_index_summary_table(
+        #         parse_lane_index_summary(indexing_lane_summary)
+        #     ),
+        # )
+
+    #def parse_lane_index_summary(self, data):
+        data = data.set_index("Lane")
+        table_data = {}
+        for lane, lane_data in data.iterrows():
+            table_data[f"Lane {lane}"] = lane_data.to_dict()
+        return table_data
+
+
+    #def lane_index_summary_table(self, data):
+        headers = {
+            header: HEADERS[header]
+            for header in interop.index_summary_columns(level="Lane")
+        }
+        table_config = {
+            "namespace": "SAV",
+            "id": "sav-lane-index-metrics-summary-table",
+            "col1_header": "Lane",
+        }
+
+        return table.plot(data, headers, table_config,)
+
+
+    def parse_barcode_index_summary(self, data):
+
+    def barcode_index_summary_table(self, data):
+
+    def imaging_qc(self):
+        log.debug("SAV: Gathering Imaging metrics")
+        imaging = pd.DataFrame(interop.imaging(self.run_metrics))
+
+        #####
+        # GRAPH: %Occ/%PF
+        #####
+        self.add_section(
+            name="Imaging Metrics", anchor="sav-imaging", description="",
+        )
 
     def _parse_reads(self, reads_df, key_prefix: str = None):
         reads_dict = {}
