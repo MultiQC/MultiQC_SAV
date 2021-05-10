@@ -24,6 +24,7 @@ setup(
     entry_points={
         "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
         "multiqc.cli_options.v1": ["illumina_dir = multiqc_sav.cli:illumina_dir",],
+        "multiqc.templates.v1": ["cmgg = multiqc_sav.templates.cmgg",],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
