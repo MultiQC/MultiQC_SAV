@@ -132,3 +132,7 @@ dmypy.json
 # multiqc tests
 multiqc_report.html
 multiqc_data
+
+# test data
+test
+data
