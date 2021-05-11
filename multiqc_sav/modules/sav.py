@@ -6,7 +6,8 @@ import interop
 import pandas as pd
 from multiqc import config
 from multiqc.modules.base_module import BaseMultiqcModule
-from multiqc.plots import bargraph, table
+from multiqc.plots import bargraph, table, scatter, heatmap, linegraph, beeswarm
+from multiqc.utils import mqc_colour
 import glob
 
 # Initialise the main MultiQC logger
@@ -97,9 +98,10 @@ HEADERS = {
         "shared_key": "base_count",
         "modify": lambda x: (x * 1000000000.0)
         * config.base_count_multiplier,  # number is already in gigabases
+        "hidden": True,
     },
     "Yield G": {
-        "title": "Yield ({})".format(config.base_count_prefix),
+        "title": "Yield ({})".format(config.read_count_prefix),
         "description": "The number of bases sequenced ({} base pairs over all 'usable cycles'".format(
             config.base_count_desc
         ),
@@ -108,14 +110,20 @@ HEADERS = {
         * config.base_count_multiplier,  # number is already in gigabases
     },
     "Cluster Count": {
-        "title": "Cluster Count",
-        "description": "Number of clusters for each tile",
-        "format": "{:,.0f}",  # No decimal places please
+        "title": "Cluster Count ({})".format(config.read_count_prefix),
+        "description": "Number of clusters for each tile ({})".format(
+            config.read_count_desc
+        ),
+        "shared_key": "cluster_count",
+        "modify": lambda x: x * config.read_count_multiplier,
     },
     "Cluster Count Pf": {
-        "title": "Cluster Count PF",
-        "description": "Number of clusters PF for each tile",
-        "format": "{:,.0f}",  # No decimal places please
+        "title": "Cluster Count PF ({})".format(config.read_count_prefix),
+        "description": "Number of clusters PF for each tile ({})".format(
+            config.read_count_desc
+        ),
+        "shared_key": "cluster_count",
+        "modify": lambda x: x * config.read_count_multiplier,
     },
     "% Pf": {
         "title": "Reads PF (%)",
@@ -182,19 +190,62 @@ HEADERS = {
         "description": "The number of tiles per lane.",
         "hidden": True,
     },
-    "Mapped Reads Cv": {},
-    "Max Mapped Reads": {},
-    "Min Mapped Reads": {},
-    "Total Fraction Mapped Reads": {},
-    "Total Pf Reads": {},
-    "Total Reads": {},
-    "Cluster Count": {},
-    "Fraction Mapped": {},
-    "Id": {},
-    "Index1": {},
-    "Index2": {},
-    "Project Name": {},
-    "Sample Id": {},
+    "Total Pf Reads": {
+        "title": "{} PF Reads".format(config.read_count_prefix),
+        "description": "The total number of passing filter reads for this lane ({})".format(
+            config.read_count_desc
+        ),
+        "modify": lambda x: float(x) * config.read_count_multiplier,
+        "format": "{:,.2f}",
+        "shared_key": "read_count",
+    },
+    "Total Reads": {
+        "title": "{} Reads".format(config.read_count_prefix),
+        "description": "The total number of reads for this lane ({})".format(
+            config.read_count_desc
+        ),
+        "modify": lambda x: float(x) * config.read_count_multiplier,
+        "format": "{:,.2f}",
+        "shared_key": "read_count",
+    },
+    "Mapped Reads Cv": {
+        "title": "CV",
+        "description": "The coefficient of variation for the number of counts across all indexes.",
+        "format": "{:,.2f}",  # 2 decimal places please
+    },
+    "Max Mapped Reads": {
+        "title": "{} Max Mapped Reads".format(config.read_count_prefix),
+        "description": "The highest representation for any index ({})".format(
+            config.read_count_desc
+        ),
+        "modify": lambda x: float(x) * config.read_count_multiplier,
+        "format": "{:,.2f}",
+        "shared_key": "read_count",
+    },
+    "Min Mapped Reads": {
+        "title": "{} Min Mapped Reads".format(config.read_count_prefix),
+        "description": "The lowest representation for any index ({})".format(
+            config.read_count_desc
+        ),
+        "modify": lambda x: float(x) * config.read_count_multiplier,
+        "format": "{:,.2f}",
+        "shared_key": "read_count",
+    },
+    "Total Fraction Mapped Reads": {"hidden": True},
+    "Fraction Mapped": {"hidden": True},
+    "Index1": {
+        "title": "Index 1 (I7)",
+        "description": "The sequence for the first Index Read.",
+    },
+    "Index2": {
+        "title": "Index 2 (I5)",
+        "description": "The sequence for the second Index Read",
+    },
+    "Project Name": {"title": "Project Name", "description": "Sample Project Name",},
+    "Sample Id": {
+        "title": "Sample ID",
+        "description": "The Sample ID given in the SampleSheet",
+    },
 }
 
 
@@ -245,12 +296,16 @@ class SAV(BaseMultiqcModule):
 
         self.load_metrics(illumina_dir)
         self.summary_qc()
-        self.indexing_qc()
-        # self.imaging_qc()
+        # self.indexing_qc()
+        self.imaging_qc()
 
     def load_metrics(self, illumina_dir):
         log.info("Loading run metrics from {}".format(illumina_dir))
         self.run_metrics = interop.read(run=illumina_dir, finalize=True)
+
+    #############
+    # SUMMARY QC
+    #############
 
     def summary_qc(self):
         log.info("Gathering Read summary metrics")
@@ -325,6 +380,19 @@ class SAV(BaseMultiqcModule):
 
         return table.plot(data, headers, table_config,)
 
+    def _parse_reads(self, reads_df, key_prefix: str = None):
+        reads_dict = {}
+        reads_df = reads_df.set_index("ReadNumber")
+        for read, data in reads_df.iterrows():
+            key = f"Read {read}" + " (I)" if data["IsIndex"] == 89 else f"Read {read}"
+            if key_prefix:
+                key = f"{key_prefix} - {key}"
+            reads_dict[key] = data.drop("IsIndex").to_dict()
+        return reads_dict
+
+    #############
+    # WIP: INDEXING QC
+    #############
     def indexing_qc(self):
         log.info("Gathering Lane Indexing metrics")
         index_summary_lane = pd.DataFrame(
@@ -376,28 +444,133 @@ class SAV(BaseMultiqcModule):
 
         return table.plot(data, headers, table_config,)
 
-
     def parse_barcode_index_summary(self, data):
+        data.set_index("Id")
+        table_data = {}
+        lanes = index_summary_barcode.groupby("Lane")
+        for lane, lane_data in lanes:
+            lane_data = lane_data.set_index("Sample Id")
+            for sample, sample_data in lane_data.iterrows():
+                table_data[f"{sample} - Lane {lane}"] = sample_data.drop(
+                    "Lane"
+                ).to_dict()
+        return table_data
 
     def barcode_index_summary_table(self, data):
+        headers = {
+            header: HEADERS[header]
+            for header in interop.index_summary_columns(level="Lane")
+        }
+        table_config = {
+            "namespace": "SAV",
+            "id": "sav-barcode-index-metrics-summary-table",
+            "col1_header": "Sample - Lane",
+        }
 
+    #############
+    # IMAGING QC
+    #############
     def imaging_qc(self):
-        log.debug("SAV: Gathering Imaging metrics")
+        log.info("Gathering Imaging metrics")
         imaging = pd.DataFrame(interop.imaging(self.run_metrics))
 
-        #####
-        # GRAPH: %Occ/%PF
-        #####
+        # # - GRAPH: Intensity/Cycle/Channel
+        # log.info("Generating 'Intensity/Cycle' plot")
+        # self.add_section(
+        #     name="Imaging Metrics - Intensity/Cycle",
+        #     anchor="sav-imaging-intensity-cycle",
+        #     description="",
+        #     plot=self.intensity_cycle_plot(imaging),
+        # )
+
+        # # - GRAPH: Clusters/Lane
+        # log.info("Generating 'Clusters/Lane' plot")
+        # self.add_section(
+        #     name="Imaging Metrics - Clusters/Lane",
+        #     anchor="sav-imaging-clusters-lane",
+        #     description="",
+        #     plot=self.clusters_lane_plot(imaging),
+        # )
+
+        # # - GRAPH: Qscore Heatmap
+        # log.info("Generating 'Qscore Heatmap' plot")
+        # self.add_section(
+        #     name="Imaging Metrics - Qscore Heatmap",
+        #     anchor="sav-imaging-qscore-heatmap",
+        #     description="",
+        #     plot=self.qscore_heatmap_plot(imaging),
+        # )
+
+        # # - GRAPH: Qscore Histogram
+        # log.info("Generating 'Qscore Histogram' plot")
+        # self.add_section(
+        #     name="Imaging Metrics - Qscore Histogram",
+        #     anchor="sav-imaging-qscore-histogram",
+        #     description="",
+        #     plot=self.qscore_histogram_plot(imaging),
+        # )
+
+        # - GRAPH: %Occ/%PF
+        log.info("Generating '% PF vs % Occupied' plot")
         self.add_section(
-            name="Imaging Metrics", anchor="sav-imaging", description="",
+            name="Imaging Metrics - % PF vs % Occupied",
+            anchor="sav-imaging-pf-vs-occ",
+            description="",
+            plot=self.occ_vs_pf_plot(imaging),
         )
 
-    def _parse_reads(self, reads_df, key_prefix: str = None):
-        reads_dict = {}
-        reads_df = reads_df.set_index("ReadNumber")
-        for read, data in reads_df.iterrows():
-            key = f"Read {read}" + " (I)" if data["IsIndex"] == 89 else f"Read {read}"
-            if key_prefix:
-                key = f"{key_prefix} - {key}"
-            reads_dict[key] = data.drop("IsIndex").to_dict()
-        return reads_dict
+    def intensity_cycle_plot(self, data):
+        plot_data = {}
+        return linegraph.plot(plot_data)
+
+    def clusters_lane_plot(self, data):
+        plot_data = {}
+        return bargraph.plot(plot_data)
+
+    def qscore_heatmap_plot(self, data):
+        plot_data = {}
+        return heatmap.plot(plot_data)
+
+    def qscore_histogram_plot(self, data):
+        plot_data = {}
+        return bargraph.plot(plot_data)
+
+    def occ_vs_pf_plot(self, data):
+        # set color scale
+        cscale = mqc_colour.mqc_colour_scale()
+        colors = cscale.get_colours("Dark2")
+
+        # filter relevant colums
+        data = data[["Lane", "% Pass Filter", "% Occupied"]]
+        # split by lane
+        per_lane = data.groupby("Lane")
+        plot_data = {}
+        for lane, lane_data in per_lane:
+            lane = int(lane)
+            if not f"Lane {lane}" in plot_data:
+                plot_data[f"Lane {lane}"] = []
+                prev_x = 0
+                prev_y = 0
+                for idx, tile in lane_data.iterrows():
+                    x = float(tile["% Occupied"])
+                    y = float(tile["% Pass Filter"])
+                    if x != prev_x or y != prev_y:
+                        prev_x = x
+                        prev_y = y
+                        plot_data[f"Lane {lane}"].append(
+                            {"x": x, "y": y, "color": colors[lane]}
+                        )
+
+        plot_config = {
+            "id": "sav-imaging-pf-vs-occ-plot",
+            "title": "SAV - % Occupied vs % Passing Filter",
+            "xlab": "% Occupied",
+            "ylab": "% Passing Filter",
+            "xmin": 0,
+            "xmax": 100,
+            "ymin": 0,
+            "ymax": 100,
+        }
+
+        return scatter.plot(plot_data, plot_config)
+
