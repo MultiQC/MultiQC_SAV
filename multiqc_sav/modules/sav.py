@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import logging
-from collections import OrderedDict
-
+import os
 import interop
 import pandas as pd
 from multiqc import config
 from multiqc.modules.base_module import BaseMultiqcModule
-from multiqc.plots import table
+from multiqc.plots import bargraph, table
+import glob
 
 # Initialise the main MultiQC logger
 log = logging.getLogger("multiqc")
@@ -212,28 +212,45 @@ class SAV(BaseMultiqcModule):
 
     def __init__(self):
 
-        # Check if the plugin has an input directory
-        if not config.kwargs.get("illumina_dir", None):
-            log.info("Skipping MultiQC_SAV")
-            return None
-        else:
-            log.debug("Running MultiQC SAV plugin")
-            self.illumina_dir = config.kwargs.get("illumina_dir")
-
         super(SAV, self).__init__(
             name="Illumina SAV",
             anchor="sav",
             info=" - Sequencing Metrics from Illumina sequencers",
         )
 
-        self.load_metrics()
+        # Check if required files are found
+        runinfo_files = []
+        runparam_files = []
+        for f in self.find_log_files("SAV/runinfo"):
+            runinfo_files.append(os.path.join(f["root"], f["fn"]))
+        for f in self.find_log_files("SAV/runparameters"):
+            runparam_files.append(os.path.join(f["root"], f["fn"]))
+
+        # Assume single run for now
+        if (
+            (os.path.dirname(runinfo_files[0]) == os.path.dirname(runparam_files[0]))
+            and len(
+                glob.glob(
+                    os.path.join(os.path.dirname(runinfo_files[0]), "InterOp/*.bin")
+                )
+            )
+            > 0
+        ):
+            illumina_dir = os.path.dirname(runinfo_files[0])
+        else:
+            log.warning(
+                "Skipping MultiQC_SAV, required files were not found or not in the right structure."
+            )
+            return None
+
+        self.load_metrics(illumina_dir)
         self.summary_qc()
         self.indexing_qc()
         # self.imaging_qc()
 
-    def load_metrics(self):
-        log.info("Loading run metrics from {}".format(self.illumina_dir))
-        self.run_metrics = interop.read(run=self.illumina_dir, finalize=True)
+    def load_metrics(self, illumina_dir):
+        log.info("Loading run metrics from {}".format(illumina_dir))
+        self.run_metrics = interop.read(run=illumina_dir, finalize=True)
 
     def summary_qc(self):
         log.info("Gathering Read summary metrics")
@@ -323,28 +340,30 @@ class SAV(BaseMultiqcModule):
         )
 
         log.info("Gathering Barcode Indexing metrics")
-        indes_summar_barcode = pd.DataFrame(
-            interop.indexing(self.run_metrics, level="Barcode")
-        )
+        try:
+            index_summary_barcode = pd.DataFrame(
+                interop.indexing(self.run_metrics, level="Barcode")
+            )
 
-        # self.add_section(
-        #     name="Indexing Barcode Metrics",
-        #     anchor="sav-barcode-index",
-        #     description="Indexing metrics per Barcode",
-        #     plot=lane_index_summary_table(
-        #         parse_lane_index_summary(indexing_lane_summary)
-        #     ),
-        # )
+            self.add_section(
+                name="Indexing Barcode Metrics",
+                anchor="sav-barcode-index",
+                description="Indexing metrics per Barcode",
+                plot=self.lane_index_summary_table(
+                    self.parse_lane_index_summary(index_summary_barcode)
+                ),
+            )
+        except IndexError as e:
+            log.warning(f"Unable to parse Barcode Indexing Metrics: {e}")
 
-    #def parse_lane_index_summary(self, data):
+    def parse_lane_index_summary(self, data):
         data = data.set_index("Lane")
         table_data = {}
         for lane, lane_data in data.iterrows():
             table_data[f"Lane {lane}"] = lane_data.to_dict()
         return table_data
 
-
-    #def lane_index_summary_table(self, data):
+    def lane_index_summary_table(self, data):
         headers = {
             header: HEADERS[header]
             for header in interop.index_summary_columns(level="Lane")

@@ -22,8 +22,10 @@ setup(
     include_package_data=True,
     install_requires=["interop>=1.1.23", "multiqc>=1.10", "pandas"],
     entry_points={
+        "multiqc.hooks.v1": [
+            "config_loaded = multiqc_sav.multiqc_sav:update_defaults",
+        ],
         "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
-        "multiqc.cli_options.v1": ["illumina_dir = multiqc_sav.cli:illumina_dir",],
         "multiqc.templates.v1": ["cmgg = multiqc_sav.templates.cmgg",],
     },
     classifiers=[

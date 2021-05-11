@@ -36,11 +36,7 @@ python setup.py install
 
 ## Usage
 
-This plugin adds an extra option to the default MultiQC cli. To use the plugin add the `--illumina_dir` to the command line.
-
-```bash
-multiqc <options> --illumina_dir /path/to/illumina/dir .
-```
+This plugin adds a QC module and searches for the `RunInfo.xml` and `RunParameters.xml` files. It tries to infer if all required files are present. No special params are needed.
 
 ### Required files
 
@@ -54,3 +50,7 @@ illumina_dir
 ├── RunParameters.xml
 
 ```
+
+## Templates
+
+This plugin add a `cmgg` specfic template with custom logo's and affiliate links. To enable this template, add the `-t/--template cmgg` option to the command line
