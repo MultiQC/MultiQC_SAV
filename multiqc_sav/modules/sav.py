@@ -272,24 +272,17 @@ class SAV(BaseMultiqcModule):
         )
 
         # Check if required files are found
-        runinfo_files = []
-        runparam_files = []
-        for f in self.find_log_files("SAV/runinfo"):
-            runinfo_files.append(os.path.join(f["root"], f["fn"]))
-        for f in self.find_log_files("SAV/runparameters"):
-            runparam_files.append(os.path.join(f["root"], f["fn"]))
+        for f in self.find_log_files("SAV/xml"):
+            if f["fn"] == "RunInfo.xml":
+                run_info = os.path.join(f["root"], f["fn"])
+            if f["fn"] == "RunParameters.xml":
+                run_parameters = os.path.join(f["root"], f["fn"])
 
         # Assume single run for now
-        if (
-            (os.path.dirname(runinfo_files[0]) == os.path.dirname(runparam_files[0]))
-            and len(
-                glob.glob(
-                    os.path.join(os.path.dirname(runinfo_files[0]), "InterOp/*.bin")
-                )
-            )
-            > 0
-        ):
-            illumina_dir = os.path.dirname(runinfo_files[0])
+        if (os.path.dirname(run_info) == os.path.dirname(run_parameters)) and len(
+            glob.glob(os.path.join(os.path.dirname(run_info), "InterOp/*.bin"))
+        ) > 0:
+            illumina_dir = os.path.dirname(run_info)
         else:
             log.warning(
                 "Skipping MultiQC_SAV, required files were not found or not in the right structure."
@@ -556,12 +549,16 @@ class SAV(BaseMultiqcModule):
 
         # - GRAPH: %Occ/%PF
         log.info("Generating '% PF vs % Occupied' plot")
-        self.add_section(
-            name="Imaging Metrics - % PF vs % Occupied",
-            anchor="sav-imaging-pf-vs-occ",
-            description="",
-            plot=self.occ_vs_pf_plot(imaging),
-        )
+        try:
+            occ_vs_pf = self.occ_vs_pf_plot(imaging)
+            self.add_section(
+                name="Imaging Metrics - % PF vs % Occupied",
+                anchor="sav-imaging-pf-vs-occ",
+                description="",
+                plot=occ_vs_pf,
+            )
+        except KeyError as e:
+            logging.info(f"Unable to generate plot: {e}")
 
     def intensity_cycle_plot(self, data):
         plot_data = {}
