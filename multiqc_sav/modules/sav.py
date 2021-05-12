@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
+import glob
 import logging
 import os
+from collections import OrderedDict
+
 import interop
 import pandas as pd
 from multiqc import config
 from multiqc.modules.base_module import BaseMultiqcModule
-from multiqc.plots import bargraph, table, scatter, heatmap, linegraph, beeswarm
+from multiqc.plots import bargraph, beeswarm, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
-import glob
 
 # Initialise the main MultiQC logger
 log = logging.getLogger("multiqc")
@@ -110,7 +112,7 @@ HEADERS = {
         * config.base_count_multiplier,  # number is already in gigabases
     },
     "Cluster Count": {
-        "title": "Cluster Count ({})".format(config.read_count_prefix),
+        "title": "Clusters ({})".format(config.read_count_prefix),
         "description": "Number of clusters for each tile ({})".format(
             config.read_count_desc
         ),
@@ -118,7 +120,7 @@ HEADERS = {
         "modify": lambda x: x * config.read_count_multiplier,
     },
     "Cluster Count Pf": {
-        "title": "Cluster Count PF ({})".format(config.read_count_prefix),
+        "title": "Clusters PF ({})".format(config.read_count_prefix),
         "description": "Number of clusters PF for each tile ({})".format(
             config.read_count_desc
         ),
@@ -334,6 +336,15 @@ class SAV(BaseMultiqcModule):
             plot=self.lane_summary_table(self.parse_lane_summary(summary_lane)),
         )
 
+        # - GRAPH: Clusters/Lane
+        log.info("Generating 'Clusters/Lane' plot")
+        self.add_section(
+            name="Summary Metrics - Clusters/Lane",
+            anchor="sav-imaging-clusters-lane",
+            description="",
+            plot=self.clusters_lane_plot(self.parse_lane_summary(summary_lane)),
+        )
+
     def parse_read_summary(self, read_metrics, non_index_metrics, total_metrics):
         table_data: dict = self._parse_reads(read_metrics)
 
@@ -379,6 +390,48 @@ class SAV(BaseMultiqcModule):
         }
 
         return table.plot(data, headers, table_config,)
+
+    def clusters_lane_plot(self, data):
+        cluster_data = {}
+        read_data = {}
+        for key, value in data.items():
+            lane = int(value["Lane"])
+            if f"Lane {lane}" not in cluster_data:
+                cluster_data[f"Lane {lane}"] = {
+                    "clusters": value["Cluster Count"],
+                    "clusters_pf": value["Cluster Count Pf"],
+                    "clusters_diff": value["Cluster Count"] - value["Cluster Count Pf"],
+                }
+                read_data[f"Lane {lane}"] = {
+                    "reads": value["Reads"],
+                    "reads_pf": value["Reads Pf"],
+                    "reads_diff": value["Reads"] - value["Reads Pf"],
+                }
+            else:
+                cluster_data[f"Lane {lane}"]["clusters"] += value["Cluster Count"]
+                cluster_data[f"Lane {lane}"]["clusters_pf"] += value["Cluster Count Pf"]
+                cluster_data[f"Lane {lane}"]["clusters_diff"] += (
+                    value["Cluster Count"] - value["Cluster Count Pf"]
+                )
+                read_data[f"Lane {lane}"]["reads"] += value["Reads"]
+                read_data[f"Lane {lane}"]["reads_pf"] += value["Reads Pf"]
+                read_data[f"Lane {lane}"]["reads_diff"] += (
+                    value["Reads"] - value["Reads Pf"]
+                )
+
+        cats = [OrderedDict(), OrderedDict()]
+        cats[0]["clusters_pf"] = {"name": "Clusters PF"}
+        cats[0]["clusters_diff"] = {"name": "Clusters not PF"}
+        cats[1]["reads_pf"] = {"name": "Reads PF"}
+        cats[1]["reads_diff"] = {"name": "Reads not PF"}
+
+        plot_config = {
+            "id": "sav-summary-clusters-reads-lane-plot",
+            "title": "SAV - Cluster/Reads per Lane",
+            "data_labels": ["Clusters", "Reads"],
+        }
+
+        return bargraph.plot([cluster_data, read_data], cats, plot_config)
 
     def _parse_reads(self, reads_df, key_prefix: str = None):
         reads_dict = {}
@@ -483,15 +536,6 @@ class SAV(BaseMultiqcModule):
         #     plot=self.intensity_cycle_plot(imaging),
         # )
 
-        # # - GRAPH: Clusters/Lane
-        # log.info("Generating 'Clusters/Lane' plot")
-        # self.add_section(
-        #     name="Imaging Metrics - Clusters/Lane",
-        #     anchor="sav-imaging-clusters-lane",
-        #     description="",
-        #     plot=self.clusters_lane_plot(imaging),
-        # )
-
         # # - GRAPH: Qscore Heatmap
         # log.info("Generating 'Qscore Heatmap' plot")
         # self.add_section(
@@ -522,10 +566,6 @@ class SAV(BaseMultiqcModule):
     def intensity_cycle_plot(self, data):
         plot_data = {}
         return linegraph.plot(plot_data)
-
-    def clusters_lane_plot(self, data):
-        plot_data = {}
-        return bargraph.plot(plot_data)
 
     def qscore_heatmap_plot(self, data):
         plot_data = {}
@@ -563,7 +603,7 @@ class SAV(BaseMultiqcModule):
 
         plot_config = {
             "id": "sav-imaging-pf-vs-occ-plot",
-            "title": "SAV - % Occupied vs % Passing Filter",
+            "title": "SAV - %Occupied/%Passing Filter",
             "xlab": "% Occupied",
             "ylab": "% Passing Filter",
             "xmin": 0,
