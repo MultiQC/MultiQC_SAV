@@ -3,13 +3,15 @@
 import glob
 import logging
 import os
+import xml.etree.ElementTree as ET
 from collections import OrderedDict
+from datetime import datetime
 
 import interop
 import pandas as pd
 from multiqc import config
 from multiqc.modules.base_module import BaseMultiqcModule
-from multiqc.plots import bargraph, beeswarm, heatmap, linegraph, scatter, table
+from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
 
 # Initialise the main MultiQC logger
@@ -274,25 +276,72 @@ class SAV(BaseMultiqcModule):
         # Check if required files are found
         for f in self.find_log_files("SAV/xml"):
             if f["fn"] == "RunInfo.xml":
-                run_info = os.path.join(f["root"], f["fn"])
+                run_info_xml = os.path.join(f["root"], f["fn"])
             if f["fn"] == "RunParameters.xml":
-                run_parameters = os.path.join(f["root"], f["fn"])
+                run_parameters_xml = os.path.join(f["root"], f["fn"])
 
         # Assume single run for now
-        if (os.path.dirname(run_info) == os.path.dirname(run_parameters)) and len(
-            glob.glob(os.path.join(os.path.dirname(run_info), "InterOp/*.bin"))
-        ) > 0:
-            illumina_dir = os.path.dirname(run_info)
+        if (
+            (os.path.dirname(run_info_xml) == os.path.dirname(run_parameters_xml))
+            and len(glob.glob(os.path.join(os.path.dirname(run_info), "InterOp/*.bin")))
+            > 0
+        ):
+            illumina_dir = os.path.dirname(run_info_xml)
         else:
             log.warning(
                 "Skipping MultiQC_SAV, required files were not found or not in the right structure."
             )
             return None
 
+        self.set_run_info(run_info_xml)
         self.load_metrics(illumina_dir)
         self.summary_qc()
         # self.indexing_qc()
-        self.imaging_qc()
+        # self.imaging_qc()
+
+    def set_run_info(self, run_info_xml):
+        run_info_xml = ET.parse(run_info_xml)
+        root = run_info_xml.getroot()
+
+        for run in root:
+            run_number = run.attrib["Number"]
+            flowcell = [fc.text for fc in run.iter("Flowcell")][0]
+            instrument_id = [fc.text for fc in run.iter("Instrument")][0]
+            run_date = [fc.text for fc in run.iter("Date")][0]
+            read_info = ""
+            for read in run.iter("Read"):
+                key = (
+                    f"Read {read.attrib['Number']} (I)"
+                    if read.attrib["IsIndexedRead"] == "Y"
+                    else f"Read {read.attrib['Number']}"
+                )
+                read_info += f"<li><b>{key}</b>: {read.attrib['NumCycles']} Cycles</li>"
+
+        self.add_section(
+            name="Run Info",
+            anchor="sav-run-info",
+            content=f"""
+                <div class="container-fluid">
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <h4>Instrument</h4>
+                      <ul>
+                        <li><b>Instrument ID:</b> {instrument_id}</li>
+                        <li><b>Flowcell:</b> {flowcell}</li>
+                        <li><b>Run Number:</b> {run_number}</li>
+                        <li><b>Run Date:</b> {datetime.strftime(datetime.strptime(run_date, '%y%m%d'),'%y-%m-%d')}</li>
+                      </ul>
+                    </div>
+                    <div class="col-sm-4">
+                      <h4>Settings</h4>
+                      <ul>
+                        {read_info}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+            """,
+        )
 
     def load_metrics(self, illumina_dir):
         log.info("Loading run metrics from {}".format(illumina_dir))
