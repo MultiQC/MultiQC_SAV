@@ -3,12 +3,14 @@
 import glob
 import logging
 import os
+import re
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime
 
 import interop
 import pandas as pd
+from interop import py_interop_plot
 from multiqc import config
 from multiqc.modules.base_module import BaseMultiqcModule
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
@@ -261,6 +263,7 @@ class SAV(BaseMultiqcModule):
         self.set_run_info(run_info_xml)
         self.load_metrics(illumina_dir)
         self.summary_qc()
+        self.q_summary()
         # self.indexing_qc()
         self.imaging_qc()
 
@@ -446,6 +449,185 @@ class SAV(BaseMultiqcModule):
         return reads_dict
 
     #############
+    # Q SUMMARY
+    #############
+    def q_summary(self):
+        # - GRAPH: Qscore Heatmap
+        log.info("Generating 'Qscore Heatmap' plot")
+        self.add_section(
+            name="Qscore Heatmap", anchor="sav-qscore-heatmap", description="",  # plot=self.qscore_heatmap_plot(),
+        )
+
+        # - GRAPH: Qscore Histogram
+        log.info("Generating 'Qscore Histogram' plot")
+        self.add_section(
+            name="Qscore Histogram", anchor="sav-qscore-histogram", description="", plot=self.qscore_histogram_plot(),
+        )
+
+    def qscore_heatmap_plot(self):
+        plot_data = {}
+
+        plot_config = {
+            "id": "sav-qscore-heatmap-plot",
+            "title": "SAV: Qscore Heatmap",
+        }
+        return heatmap.plot(plot_data, plot_config)
+
+    def qscore_histogram_plot(self):
+        bar_data = py_interop_plot.bar_plot_data()
+        options = py_interop_plot.filter_options(self.run_metrics.run_info().flowcell().naming_method())
+        py_interop_plot.plot_qscore_histogram(self.run_metrics, options, bar_data)
+
+        hist = {}
+        qscore = []
+        reads = []
+        binsize = []
+        for i in range(bar_data.size()):
+            qscore = [bar_data.at(i).at(j).x() for j in range(bar_data.at(i).size())]
+            reads = [bar_data.at(i).at(j).y() for j in range(bar_data.at(i).size())]
+            binsize = [bar_data.at(i).at(j).width() for j in range(bar_data.at(i).size())]
+
+        i = 0
+        while i < len(qscore):
+            j = 0
+            while j < binsize[i]:
+                hist.update({qscore[i] + j: reads[i]})
+                j += 1
+            i += 1
+        plot_data = {bar_data.title(): hist}
+
+        plot_config = {
+            "id": "sav-qscore-histogram-plot",
+            "title": "SAV: Qscore Histogram",
+            "xlab": "Qscore",
+            "ylab": "Reads (Billion)",
+        }
+        return linegraph.plot(plot_data, plot_config)
+
+    #############
+    # IMAGING QC
+    #############
+    def imaging_qc(self):
+        log.info("Gathering Imaging metrics")
+        imaging = pd.DataFrame(interop.imaging(self.run_metrics))
+
+        plot_data = self.parse_imaging_table(imaging)
+
+        # - GRAPH: Intensity/Cycle/Channel
+        if len(plot_data.get("intensity_cycle", [])) > 0:
+            log.info("Generating 'Intensity per Cycle' plot")
+            self.add_section(
+                name="Intensity per Cycle",
+                anchor="sav-intensity-cycle",
+                description="",
+                plot=self.intensity_cycle_plot(plot_data.get("intenstity_cycle", [])),
+            )
+
+        # - GRAPH: %Occ/%PF
+        log.info("Generating '% PF vs % Occupied' plot")
+        if len(plot_data.get("occ_vs_pf", [])) > 0:
+            self.add_section(
+                name="% PF vs % Occupied",
+                anchor="sav-imaging-pf-vs-occ",
+                description="% Clusters passing filter vs % Wells Occupied",
+                plot=self.occ_vs_pf_plot(plot_data.get("occ_vs_pf", [])),
+            )
+
+    def parse_imaging_table(self, data):
+        # set color scale for occ_pf
+        cscale = mqc_colour.mqc_colour_scale()
+        colors = cscale.get_colours("Dark2")
+
+        per_lane = data.groupby("Lane")
+        occ_pf = {}
+        intensity_cycle = {}
+        for lane, lane_data in per_lane:
+            lane = int(lane)
+
+            # prep intensity_cycle
+            CHANNEL_SETS = [{"P90/RED", "P90/GREEN"}, {"P90/Red", "P90/Green"}, {"P90/G", "P90/A", "P90/T", "P90/C"}]
+            channels = set()
+            for channel_set in CHANNEL_SETS:
+                if channel_set.issubset(lane_data.columns):
+                    channels = channel_set
+
+            # prep occ_pf
+            if not f"Lane {lane}" in occ_pf:
+                occ_pf[f"Lane {lane}"] = []
+                prev_occ = 0
+                prev_pf = 0
+
+            # parse imaging table lane
+            for _, row in lane_data.iterrows():
+                # intensity_cyle
+                cycle = int(row["Cycle"])
+                for channel in channels:
+                    intensity = float(row[channel])
+                    if not channel in intensity_cycle:
+                        intensity_cycle[channel] = {}
+                    if not cycle in intensity_cycle[channel]:
+                        intensity_cycle[channel].update({cycle: 0})
+                    intensity_cycle[channel][cycle] += intensity
+
+                # occ_pf
+                if {"% Occupied", "% Pass Filter"}.issubset(lane_data.columns):
+                    occ = float(row["% Occupied"])
+                    pf = float(row["% Pass Filter"])
+
+                    if occ != prev_occ or pf != prev_pf:
+                        prev_occ = occ
+                        prev_pf = pf
+                        occ_pf[f"Lane {lane}"].append({"x": occ, "y": pf, "color": colors[lane]})
+                else:
+                    occ_pf = {}
+
+                # q_heatmap
+
+                # q_histogram
+
+        return {"intensity_cycle": intensity_cycle, "occ_vs_pf": occ_pf}
+
+    def intensity_cycle_plot(self, data):
+        # get keys from data
+        key_color_dict = {}
+        for key in data:
+            if re.match(r"\w+/red", key, re.IGNORECASE):
+                key_color_dict[key] = "red"
+            elif re.match(r"\w+/green", key, re.IGNORECASE):
+                key_color_dict[key] = "green"
+            elif re.match(r"\w+/G", key):
+                key_color_dict[key] = "blue"
+            elif re.match(r"\w+/A", key):
+                key_color_dict[key] = "black"
+            elif re.match(r"\w+/T", key):
+                key_color_dict[key] = "green"
+            elif re.match(r"\w+/C", key):
+                key_color_dict[key] = "red"
+
+        plot_config = {
+            "id": "sav-intensity-vs-cycle-plot",
+            "title": "SAV: Intensity per cycle",
+            "xlab": "Cycle",
+            "ylab": "Intensity",
+            "colors": key_color_dict,
+        }
+
+        return linegraph.plot(data, plot_config)
+
+    def occ_vs_pf_plot(self, data):
+        plot_config = {
+            "id": "sav-pf-vs-occ-plot",
+            "title": "SAV: % Passing Filter vs % Occupied",
+            "xlab": "% Occupied",
+            "ylab": "% Passing Filter",
+            "xmin": 0,
+            "xmax": 100,
+            "ymin": 0,
+            "ymax": 100,
+        }
+        return scatter.plot(data, plot_config)
+
+    #############
     # WIP: INDEXING QC
     #############
     def indexing_qc(self):
@@ -505,98 +687,3 @@ class SAV(BaseMultiqcModule):
             "id": "sav-barcode-index-metrics-summary-table",
             "col1_header": "Sample - Lane",
         }
-
-    #############
-    # IMAGING QC
-    #############
-    def imaging_qc(self):
-        log.info("Gathering Imaging metrics")
-        imaging = pd.DataFrame(interop.imaging(self.run_metrics))
-
-        # - GRAPH: Intensity/Cycle/Channel
-        log.info("Generating 'Intensity/Cycle' plot")
-        self.add_section(
-            name="Intensity/Cycle",
-            anchor="sav-intensity-cycle",
-            description="",
-            # plot=self.intensity_cycle_plot(imaging),
-        )
-
-        # - GRAPH: Qscore Heatmap
-        log.info("Generating 'Qscore Heatmap' plot")
-        self.add_section(
-            name="Qscore Heatmap",
-            anchor="sav-qscore-heatmap",
-            description="",
-            # plot=self.qscore_heatmap_plot(imaging),
-        )
-
-        # - GRAPH: Qscore Histogram
-        log.info("Generating 'Qscore Histogram' plot")
-        self.add_section(
-            name="Qscore Histogram",
-            anchor="sav-qscore-histogram",
-            description="",
-            # plot=self.qscore_histogram_plot(imaging),
-        )
-
-        # - GRAPH: %Occ/%PF
-        log.info("Generating '% PF vs % Occupied' plot")
-        try:
-            occ_vs_pf = self.occ_vs_pf_plot(imaging)
-            self.add_section(
-                name="% PF vs % Occupied",
-                anchor="sav-imaging-pf-vs-occ",
-                description="% Clusters passing filter vs % Wells Occupied",
-                plot=occ_vs_pf,
-            )
-        except KeyError as e:
-            logging.info(f"Unable to generate plot: {e}")
-
-    def intensity_cycle_plot(self, data):
-        plot_data = {}
-        return linegraph.plot(plot_data)
-
-    def qscore_heatmap_plot(self, data):
-        plot_data = {}
-        return heatmap.plot(plot_data)
-
-    def qscore_histogram_plot(self, data):
-        plot_data = {}
-        return bargraph.plot(plot_data)
-
-    def occ_vs_pf_plot(self, data):
-        # set color scale
-        cscale = mqc_colour.mqc_colour_scale()
-        colors = cscale.get_colours("Dark2")
-        # filter relevant colums
-        data = data[["Lane", "% Pass Filter", "% Occupied"]]
-        # split by lane
-        per_lane = data.groupby("Lane")
-        plot_data = {}
-        for lane, lane_data in per_lane:
-            lane = int(lane)
-            if not f"Lane {lane}" in plot_data:
-                plot_data[f"Lane {lane}"] = []
-                prev_x = 0
-                prev_y = 0
-                for idx, tile in lane_data.iterrows():
-                    x = float(tile["% Occupied"])
-                    y = float(tile["% Pass Filter"])
-                    if x != prev_x or y != prev_y:
-                        prev_x = x
-                        prev_y = y
-                        plot_data[f"Lane {lane}"].append({"x": x, "y": y, "color": colors[lane]})
-
-        plot_config = {
-            "id": "sav-pf-vs-occ-plot",
-            "title": "SAV - % Passing Filter vs % Occupied",
-            "xlab": "% Occupied",
-            "ylab": "% Passing Filter",
-            "xmin": 0,
-            "xmax": 100,
-            "ymin": 0,
-            "ymax": 100,
-        }
-
-        return scatter.plot(plot_data, plot_config)
