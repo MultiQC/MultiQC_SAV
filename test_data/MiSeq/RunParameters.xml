@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<RunParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" LineWashRequired="false">
+  <RunParametersVersion>MiSeq_1_2</RunParametersVersion>
+  <CopyManifests>false</CopyManifests>
+  <FlowcellRFIDTag>
+    <SerialNumber>000000000-JDP9R</SerialNumber>
+    <PartNumber>15028382</PartNumber>
+    <ExpirationDate>2022-01-22T00:00:00</ExpirationDate>
+    <LotNumber>20513109</LotNumber>
+  </FlowcellRFIDTag>
+  <PR2BottleRFIDTag>
+    <SerialNumber>MS2862591-00PR2</SerialNumber>
+    <PartNumber>15041807</PartNumber>
+    <ExpirationDate>2022-02-01T00:00:00</ExpirationDate>
+    <LotNumber>20514492</LotNumber>
+  </PR2BottleRFIDTag>
+  <ReagentKitRFIDTag>
+    <SerialNumber>MS3181617-300V2</SerialNumber>
+    <PartNumber>15033572</PartNumber>
+    <ExpirationDate>2022-01-20T00:00:00</ExpirationDate>
+    <LotNumber>20521476</LotNumber>
+  </ReagentKitRFIDTag>
+  <Resumable>true</Resumable>
+  <ManifestFiles />
+  <AfterRunWashMethod>Post-Run Wash</AfterRunWashMethod>
+  <Setup>
+    <SupportMultipleSurfacesInUI>true</SupportMultipleSurfacesInUI>
+    <ApplicationVersion>4.0.0.1769</ApplicationVersion>
+    <NumTilesPerSwath>14</NumTilesPerSwath>
+    <NumSwaths>1</NumSwaths>
+    <NumLanes>1</NumLanes>
+    <ApplicationName>MiSeq Control Software</ApplicationName>
+  </Setup>
+  <RunID>210505_M01101_0075_000000000-JDP9R</RunID>
+  <ScannerID>M01101</ScannerID>
+  <RunNumber>75</RunNumber>
+  <FPGAVersion>9.5.12</FPGAVersion>
+  <MCSVersion>4.0.0.1769</MCSVersion>
+  <RTAVersion>1.18.54.4</RTAVersion>
+  <Barcode>000000000-JDP9R</Barcode>
+  <PR2BottleBarcode>MS2862591-00PR2</PR2BottleBarcode>
+  <ReagentKitPartNumberEntered>15033572</ReagentKitPartNumberEntered>
+  <ReagentKitVersion>Version2</ReagentKitVersion>
+  <ReagentKitBarcode>MS3181617-300V2</ReagentKitBarcode>
+  <PreviousPR2BottleBarcode />
+  <PreviousReagentKitBarcode />
+  <ExperimentName>RNASeq_M023</ExperimentName>
+  <RunDescription>RNASeq_M023</RunDescription>
+  <LibraryPrepKit>Custom</LibraryPrepKit>
+  <IndexKit>Custom</IndexKit>
+  <Chemistry>Amplicon</Chemistry>
+  <Username>RNASeq.cmgg@uzgent.be</Username>
+  <EnableAnalysis>false</EnableAnalysis>
+  <Reads>
+    <RunInfoRead Number="1" NumCycles="151" IsIndexedRead="N" />
+    <RunInfoRead Number="2" NumCycles="8" IsIndexedRead="Y" />
+    <RunInfoRead Number="3" NumCycles="8" IsIndexedRead="Y" />
+    <RunInfoRead Number="4" NumCycles="151" IsIndexedRead="N" />
+  </Reads>
+  <TempFolder>D:\Illumina\MiSeqTemp\210505_M01101_0075_000000000-JDP9R</TempFolder>
+  <RTATempFolder>D:\Illumina\RTATemp\210505_M01101_0075_000000000-JDP9R</RTATempFolder>
+  <AnalysisFolder>D:\Illumina\MiSeqAnalysis\210505_M01101_0075_000000000-JDP9R</AnalysisFolder>
+  <RunStartDate>210505</RunStartDate>
+  <MostRecentWashType>MissedPostRunWash</MostRecentWashType>
+  <RecipeFolder>C:\ProgramData\Illumina\MiSeq Control Software\Recipe</RecipeFolder>
+  <ILMNOnlyRecipeFolder>C:\program files\Illumina\MiSeq Control Software\Recipe</ILMNOnlyRecipeFolder>
+  <SampleSheetName>MS3181617-300V2</SampleSheetName>
+  <SampleSheetFolder>D:\Illumina\MiSeq Control Software\SampleSheets</SampleSheetFolder>
+  <SampleSheetFilePath>C:\Users\sbsUser\Documents\SampleSheets\RNASeq_sample sheet_M023_stalen 1-8 .csv</SampleSheetFilePath>
+  <ManifestFolder>D:\Illumina\MiSeq Control Software\Manifests</ManifestFolder>
+  <OutputFolder>\\aclfiler.ugent.be\cmgg_upload\MiSeq_M01101\210505_M01101_0075_000000000-JDP9R</OutputFolder>
+  <FocusMethod>AutoFocus</FocusMethod>
+  <SurfaceToScan>Both</SurfaceToScan>
+  <SaveFocusImages>false</SaveFocusImages>
+  <SaveScanImages>true</SaveScanImages>
+  <RunManagementType>SampleSheet</RunManagementType>
+  <BaseSpaceRunId>206383205</BaseSpaceRunId>
+  <CloudRunId>206383205</CloudRunId>
+  <SelectedRun>RNASeq_M023</SelectedRun>
+  <ModuleName>GenerateFastQWorkflow</ModuleName>
+  <ModuleVersion>3.0.1.49</ModuleVersion>
+  <MAPRunId>25025</MAPRunId>
+  <DxUserName />
+  <DxUserLevel />
+  <BaseSpaceMode>IpdRequested RunMonitoringRequested RunStorageRequested</BaseSpaceMode>
+  <BaseSpaceUserName>RNASeq.cmgg@uzgent.be</BaseSpaceUserName>
+  <ManualFlowcellEntry>false</ManualFlowcellEntry>
+  <ManualReagentEntry>false</ManualReagentEntry>
+  <ManualPR2Entry>false</ManualPR2Entry>
+  <CopyServiceRunId>17EDC93B463CF8B8</CopyServiceRunId>
+  <LocalRunManagerRunId>25025</LocalRunManagerRunId>
+</RunParameters>
