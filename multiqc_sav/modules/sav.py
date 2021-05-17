@@ -283,7 +283,9 @@ class SAV(BaseMultiqcModule):
         # Assume single run for now
         if (
             (os.path.dirname(run_info_xml) == os.path.dirname(run_parameters_xml))
-            and len(glob.glob(os.path.join(os.path.dirname(run_info), "InterOp/*.bin")))
+            and len(
+                glob.glob(os.path.join(os.path.dirname(run_info_xml), "InterOp/*.bin"))
+            )
             > 0
         ):
             illumina_dir = os.path.dirname(run_info_xml)
@@ -297,9 +299,10 @@ class SAV(BaseMultiqcModule):
         self.load_metrics(illumina_dir)
         self.summary_qc()
         # self.indexing_qc()
-        # self.imaging_qc()
+        self.imaging_qc()
 
     def set_run_info(self, run_info_xml):
+        log.info("Loading Run Info")
         run_info_xml = ET.parse(run_info_xml)
         root = run_info_xml.getroot()
 
@@ -308,6 +311,15 @@ class SAV(BaseMultiqcModule):
             flowcell = [fc.text for fc in run.iter("Flowcell")][0]
             instrument_id = [fc.text for fc in run.iter("Instrument")][0]
             run_date = [fc.text for fc in run.iter("Date")][0]
+            try:
+                parsed_run_date = datetime.strftime(
+                    datetime.strptime(run_date, "%y%m%d"), "%d-%m-%Y"
+                )
+            except ValueError:
+                parsed_run_date = datetime.strftime(
+                    datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y"
+                )
+
             read_info = ""
             for read in run.iter("Read"):
                 key = (
@@ -329,7 +341,7 @@ class SAV(BaseMultiqcModule):
                         <li><b>Instrument ID:</b> {instrument_id}</li>
                         <li><b>Flowcell:</b> {flowcell}</li>
                         <li><b>Run Number:</b> {run_number}</li>
-                        <li><b>Run Date:</b> {datetime.strftime(datetime.strptime(run_date, '%y%m%d'),'%y-%m-%d')}</li>
+                        <li><b>Run Date:</b> {parsed_run_date}</li>
                       </ul>
                     </div>
                     <div class="col-sm-4">
@@ -344,8 +356,12 @@ class SAV(BaseMultiqcModule):
         )
 
     def load_metrics(self, illumina_dir):
-        log.info("Loading run metrics from {}".format(illumina_dir))
-        self.run_metrics = interop.read(run=illumina_dir, finalize=True)
+        log.info("Loading Run Metrics")
+        self.run_metrics = interop.read(
+            run=illumina_dir,
+            valid_to_load=interop.load_imaging_metrics(),
+            finalize=True,
+        )
 
     #############
     # SUMMARY QC
@@ -381,9 +397,9 @@ class SAV(BaseMultiqcModule):
         # - GRAPH: Clusters/Lane
         log.info("Generating 'Clusters/Lane' plot")
         self.add_section(
-            name="Summary Metrics - Clusters/Lane",
-            anchor="sav-imaging-clusters-lane",
-            description="",
+            name="Clusters/Reads per Lane",
+            anchor="sav-clusters-lane",
+            description="Total Cluster/Read count per Lane",
             plot=self.clusters_lane_plot(self.parse_lane_summary(summary_lane)),
         )
 
@@ -569,41 +585,41 @@ class SAV(BaseMultiqcModule):
         log.info("Gathering Imaging metrics")
         imaging = pd.DataFrame(interop.imaging(self.run_metrics))
 
-        # # - GRAPH: Intensity/Cycle/Channel
-        # log.info("Generating 'Intensity/Cycle' plot")
-        # self.add_section(
-        #     name="Imaging Metrics - Intensity/Cycle",
-        #     anchor="sav-imaging-intensity-cycle",
-        #     description="",
-        #     plot=self.intensity_cycle_plot(imaging),
-        # )
+        # - GRAPH: Intensity/Cycle/Channel
+        log.info("Generating 'Intensity/Cycle' plot")
+        self.add_section(
+            name="Intensity/Cycle",
+            anchor="sav-intensity-cycle",
+            description="",
+            # plot=self.intensity_cycle_plot(imaging),
+        )
 
-        # # - GRAPH: Qscore Heatmap
-        # log.info("Generating 'Qscore Heatmap' plot")
-        # self.add_section(
-        #     name="Imaging Metrics - Qscore Heatmap",
-        #     anchor="sav-imaging-qscore-heatmap",
-        #     description="",
-        #     plot=self.qscore_heatmap_plot(imaging),
-        # )
+        # - GRAPH: Qscore Heatmap
+        log.info("Generating 'Qscore Heatmap' plot")
+        self.add_section(
+            name="Qscore Heatmap",
+            anchor="sav-qscore-heatmap",
+            description="",
+            # plot=self.qscore_heatmap_plot(imaging),
+        )
 
-        # # - GRAPH: Qscore Histogram
-        # log.info("Generating 'Qscore Histogram' plot")
-        # self.add_section(
-        #     name="Imaging Metrics - Qscore Histogram",
-        #     anchor="sav-imaging-qscore-histogram",
-        #     description="",
-        #     plot=self.qscore_histogram_plot(imaging),
-        # )
+        # - GRAPH: Qscore Histogram
+        log.info("Generating 'Qscore Histogram' plot")
+        self.add_section(
+            name="Qscore Histogram",
+            anchor="sav-qscore-histogram",
+            description="",
+            # plot=self.qscore_histogram_plot(imaging),
+        )
 
         # - GRAPH: %Occ/%PF
         log.info("Generating '% PF vs % Occupied' plot")
         try:
             occ_vs_pf = self.occ_vs_pf_plot(imaging)
             self.add_section(
-                name="Imaging Metrics - % PF vs % Occupied",
+                name="% PF vs % Occupied",
                 anchor="sav-imaging-pf-vs-occ",
-                description="",
+                description="% Clusters passing filter vs % Wells Occupied",
                 plot=occ_vs_pf,
             )
         except KeyError as e:
@@ -648,8 +664,8 @@ class SAV(BaseMultiqcModule):
                         )
 
         plot_config = {
-            "id": "sav-imaging-pf-vs-occ-plot",
-            "title": "SAV - %Occupied/%Passing Filter",
+            "id": "sav-pf-vs-occ-plot",
+            "title": "SAV - % Passing Filter vs % Occupied",
             "xlab": "% Occupied",
             "ylab": "% Passing Filter",
             "xmin": 0,
