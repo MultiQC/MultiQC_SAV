@@ -1,4 +1,4 @@
-name: "MultiQC - Linux"
+name: "Build - Linux"
 on: [push, pull_request]
 
 jobs:

@@ -15,6 +15,8 @@ log.info("Running MultiQC SAV Plugin v{}".format(config.multiqc_sav_version))
 
 def update_config():
     log.info("SAV: Updating search patterns")
+    # Add module to module order
+    config.module_order.append({"SAV": {"module_tag": ["DNA", "RNA", "BCL", "Demultiplex"]}})
     # Update search patterns
     if "SAV/xml" not in config.sp:
         config.update_dict(config.sp, {"SAV/xml": {"fn_re": ".*(RunInfo|RunParameters)\.xml"}})

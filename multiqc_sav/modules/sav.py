@@ -428,8 +428,9 @@ class SAV(BaseMultiqcModule):
 
         plot_config = {
             "id": "sav-summary-clusters-reads-lane-plot",
-            "title": "SAV - Cluster/Reads per Lane",
+            "title": "SAV: Cluster/Reads per Lane",
             "data_labels": ["Clusters", "Reads"],
+            "ylab": "Lane",
         }
 
         return bargraph.plot([cluster_data, read_data], cats, plot_config)
@@ -490,7 +491,7 @@ class SAV(BaseMultiqcModule):
     def parse_barcode_index_summary(self, data):
         data.set_index("Id")
         table_data = {}
-        lanes = index_summary_barcode.groupby("Lane")
+        lanes = data.groupby("Lane")
         for lane, lane_data in lanes:
             lane_data = lane_data.set_index("Sample Id")
             for sample, sample_data in lane_data.iterrows():
@@ -599,4 +600,3 @@ class SAV(BaseMultiqcModule):
         }
 
         return scatter.plot(plot_data, plot_config)
-
