@@ -22,11 +22,8 @@ setup(
     include_package_data=True,
     install_requires=["interop>=1.1.23", "multiqc>=1.10", "pandas"],
     entry_points={
-        "multiqc.hooks.v1": [
-            "config_loaded = multiqc_sav.multiqc_sav:update_defaults",
-        ],
+        "multiqc.hooks.v1": ["config_loaded = multiqc_sav.multiqc_sav:update_config",],
         "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
-        "multiqc.templates.v1": ["cmgg = multiqc_sav.templates.cmgg",],
     },
     classifiers=[
         "Development Status :: 4 - Beta",

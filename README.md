@@ -50,7 +50,3 @@ illumina_dir
 ├── RunParameters.xml
 
 ```
-
-## Templates
-
-This plugin add a `cmgg` specfic template with custom logo's and affiliate links. To enable this template, add the `-t/--template cmgg` option to the command line

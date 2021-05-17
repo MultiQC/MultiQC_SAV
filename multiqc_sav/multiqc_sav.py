@@ -13,7 +13,7 @@ config.multiqc_sav_version = get_distribution("multiqc_sav").version
 log.info("Running MultiQC SAV Plugin v{}".format(config.multiqc_sav_version))
 
 
-def update_defaults():
+def update_config():
     log.info("SAV: Updating search patterns")
     # Update search patterns
     if "SAV/xml" not in config.sp:
