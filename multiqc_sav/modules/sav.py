@@ -100,8 +100,7 @@ HEADERS = {
             config.base_count_desc
         ),
         "shared_key": "base_count",
-        "modify": lambda x: (x * 1000000000.0)
-        * config.base_count_multiplier,  # number is already in gigabases
+        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,  # number is already in gigabases
         "hidden": True,
     },
     "Yield G": {
@@ -110,22 +109,17 @@ HEADERS = {
             config.base_count_desc
         ),
         "shared_key": "base_count",
-        "modify": lambda x: (x * 1000000000.0)
-        * config.base_count_multiplier,  # number is already in gigabases
+        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,  # number is already in gigabases
     },
     "Cluster Count": {
         "title": "Clusters ({})".format(config.read_count_prefix),
-        "description": "Number of clusters for each tile ({})".format(
-            config.read_count_desc
-        ),
+        "description": "Number of clusters for each tile ({})".format(config.read_count_desc),
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
     "Cluster Count Pf": {
         "title": "Clusters PF ({})".format(config.read_count_prefix),
-        "description": "Number of clusters PF for each tile ({})".format(
-            config.read_count_desc
-        ),
+        "description": "Number of clusters PF for each tile ({})".format(config.read_count_desc),
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
@@ -183,31 +177,21 @@ HEADERS = {
     },
     "Reads Pf": {
         "title": "{} PF Reads".format(config.read_count_prefix),
-        "description": "The number of passing filter reads ({})".format(
-            config.read_count_desc
-        ),
+        "description": "The number of passing filter reads ({})".format(config.read_count_desc),
         "shared_key": "read_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
-    "Tile Count": {
-        "title": "Tiles",
-        "description": "The number of tiles per lane.",
-        "hidden": True,
-    },
+    "Tile Count": {"title": "Tiles", "description": "The number of tiles per lane.", "hidden": True,},
     "Total Pf Reads": {
         "title": "{} PF Reads".format(config.read_count_prefix),
-        "description": "The total number of passing filter reads for this lane ({})".format(
-            config.read_count_desc
-        ),
+        "description": "The total number of passing filter reads for this lane ({})".format(config.read_count_desc),
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Total Reads": {
         "title": "{} Reads".format(config.read_count_prefix),
-        "description": "The total number of reads for this lane ({})".format(
-            config.read_count_desc
-        ),
+        "description": "The total number of reads for this lane ({})".format(config.read_count_desc),
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
@@ -219,37 +203,24 @@ HEADERS = {
     },
     "Max Mapped Reads": {
         "title": "{} Max Mapped Reads".format(config.read_count_prefix),
-        "description": "The highest representation for any index ({})".format(
-            config.read_count_desc
-        ),
+        "description": "The highest representation for any index ({})".format(config.read_count_desc),
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Min Mapped Reads": {
         "title": "{} Min Mapped Reads".format(config.read_count_prefix),
-        "description": "The lowest representation for any index ({})".format(
-            config.read_count_desc
-        ),
+        "description": "The lowest representation for any index ({})".format(config.read_count_desc),
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Total Fraction Mapped Reads": {"hidden": True},
     "Fraction Mapped": {"hidden": True},
-    "Index1": {
-        "title": "Index 1 (I7)",
-        "description": "The sequence for the first Index Read.",
-    },
-    "Index2": {
-        "title": "Index 2 (I5)",
-        "description": "The sequence for the second Index Read",
-    },
+    "Index1": {"title": "Index 1 (I7)", "description": "The sequence for the first Index Read.",},
+    "Index2": {"title": "Index 2 (I5)", "description": "The sequence for the second Index Read",},
     "Project Name": {"title": "Project Name", "description": "Sample Project Name",},
-    "Sample Id": {
-        "title": "Sample ID",
-        "description": "The Sample ID given in the SampleSheet",
-    },
+    "Sample Id": {"title": "Sample ID", "description": "The Sample ID given in the SampleSheet",},
 }
 
 
@@ -268,9 +239,7 @@ class SAV(BaseMultiqcModule):
     def __init__(self):
 
         super(SAV, self).__init__(
-            name="Illumina SAV",
-            anchor="sav",
-            info=" - Sequencing Metrics from Illumina sequencers",
+            name="Illumina SAV", anchor="sav", info=" - Sequencing Metrics from Illumina sequencers",
         )
 
         # Check if required files are found
@@ -281,18 +250,12 @@ class SAV(BaseMultiqcModule):
                 run_parameters_xml = os.path.join(f["root"], f["fn"])
 
         # Assume single run for now
-        if (
-            (os.path.dirname(run_info_xml) == os.path.dirname(run_parameters_xml))
-            and len(
-                glob.glob(os.path.join(os.path.dirname(run_info_xml), "InterOp/*.bin"))
-            )
-            > 0
-        ):
+        if (os.path.dirname(run_info_xml) == os.path.dirname(run_parameters_xml)) and len(
+            glob.glob(os.path.join(os.path.dirname(run_info_xml), "InterOp/*.bin"))
+        ) > 0:
             illumina_dir = os.path.dirname(run_info_xml)
         else:
-            log.warning(
-                "Skipping MultiQC_SAV, required files were not found or not in the right structure."
-            )
+            log.warning("Skipping MultiQC_SAV, required files were not found or not in the right structure.")
             return None
 
         self.set_run_info(run_info_xml)
@@ -312,13 +275,9 @@ class SAV(BaseMultiqcModule):
             instrument_id = [fc.text for fc in run.iter("Instrument")][0]
             run_date = [fc.text for fc in run.iter("Date")][0]
             try:
-                parsed_run_date = datetime.strftime(
-                    datetime.strptime(run_date, "%y%m%d"), "%d-%m-%Y"
-                )
+                parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%y%m%d"), "%d-%m-%Y")
             except ValueError:
-                parsed_run_date = datetime.strftime(
-                    datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y"
-                )
+                parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y")
 
             read_info = ""
             for read in run.iter("Read"):
@@ -357,11 +316,7 @@ class SAV(BaseMultiqcModule):
 
     def load_metrics(self, illumina_dir):
         log.info("Loading Run Metrics")
-        self.run_metrics = interop.read(
-            run=illumina_dir,
-            valid_to_load=interop.load_imaging_metrics(),
-            finalize=True,
-        )
+        self.run_metrics = interop.read(run=illumina_dir, valid_to_load=interop.load_imaging_metrics(), finalize=True,)
 
     #############
     # SUMMARY QC
@@ -370,18 +325,14 @@ class SAV(BaseMultiqcModule):
     def summary_qc(self):
         log.info("Gathering Read summary metrics")
         summary_read = pd.DataFrame(interop.summary(self.run_metrics, level="Read"))
-        summary_nonindex = pd.DataFrame(
-            interop.summary(self.run_metrics, level="NonIndex")
-        )
+        summary_nonindex = pd.DataFrame(interop.summary(self.run_metrics, level="NonIndex"))
         summary_total = pd.DataFrame(interop.summary(self.run_metrics, level="Total"))
 
         self.add_section(
             name="Summary Read Metrics",
             anchor="sav-read-summary",
             description="Summary metrics per Read",
-            plot=self.read_summary_table(
-                self.parse_read_summary(summary_read, summary_nonindex, summary_total)
-            ),
+            plot=self.read_summary_table(self.parse_read_summary(summary_read, summary_nonindex, summary_total)),
         )
 
         log.info("Gathering Lane summary metrics")
@@ -415,9 +366,7 @@ class SAV(BaseMultiqcModule):
         return table_data
 
     def read_summary_table(self, data):
-        headers = {
-            header: HEADERS[header] for header in interop.summary_columns(level="Lane")
-        }
+        headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
 
         table_config = {
             "namespace": "SAV",
@@ -438,9 +387,7 @@ class SAV(BaseMultiqcModule):
         return table_data
 
     def lane_summary_table(self, data):
-        headers = {
-            header: HEADERS[header] for header in interop.summary_columns(level="Lane")
-        }
+        headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
         table_config = {
             "namespace": "SAV",
             "id": "sav-lane-metrics-summary-table",
@@ -468,14 +415,10 @@ class SAV(BaseMultiqcModule):
             else:
                 cluster_data[f"Lane {lane}"]["clusters"] += value["Cluster Count"]
                 cluster_data[f"Lane {lane}"]["clusters_pf"] += value["Cluster Count Pf"]
-                cluster_data[f"Lane {lane}"]["clusters_diff"] += (
-                    value["Cluster Count"] - value["Cluster Count Pf"]
-                )
+                cluster_data[f"Lane {lane}"]["clusters_diff"] += value["Cluster Count"] - value["Cluster Count Pf"]
                 read_data[f"Lane {lane}"]["reads"] += value["Reads"]
                 read_data[f"Lane {lane}"]["reads_pf"] += value["Reads Pf"]
-                read_data[f"Lane {lane}"]["reads_diff"] += (
-                    value["Reads"] - value["Reads Pf"]
-                )
+                read_data[f"Lane {lane}"]["reads_diff"] += value["Reads"] - value["Reads Pf"]
 
         cats = [OrderedDict(), OrderedDict()]
         cats[0]["clusters_pf"] = {"name": "Clusters PF"}
@@ -506,31 +449,23 @@ class SAV(BaseMultiqcModule):
     #############
     def indexing_qc(self):
         log.info("Gathering Lane Indexing metrics")
-        index_summary_lane = pd.DataFrame(
-            interop.index_summary(self.run_metrics, level="Lane")
-        )
+        index_summary_lane = pd.DataFrame(interop.index_summary(self.run_metrics, level="Lane"))
         self.add_section(
             name="Indexing Lane Metrics",
             anchor="sav-lane-index",
             description="Indexing metrics per Lane",
-            plot=self.lane_index_summary_table(
-                self.parse_lane_index_summary(index_summary_lane)
-            ),
+            plot=self.lane_index_summary_table(self.parse_lane_index_summary(index_summary_lane)),
         )
 
         log.info("Gathering Barcode Indexing metrics")
         try:
-            index_summary_barcode = pd.DataFrame(
-                interop.indexing(self.run_metrics, level="Barcode")
-            )
+            index_summary_barcode = pd.DataFrame(interop.indexing(self.run_metrics, level="Barcode"))
 
             self.add_section(
                 name="Indexing Barcode Metrics",
                 anchor="sav-barcode-index",
                 description="Indexing metrics per Barcode",
-                plot=self.lane_index_summary_table(
-                    self.parse_lane_index_summary(index_summary_barcode)
-                ),
+                plot=self.lane_index_summary_table(self.parse_lane_index_summary(index_summary_barcode)),
             )
         except IndexError as e:
             log.warning(f"Unable to parse Barcode Indexing Metrics: {e}")
@@ -543,10 +478,7 @@ class SAV(BaseMultiqcModule):
         return table_data
 
     def lane_index_summary_table(self, data):
-        headers = {
-            header: HEADERS[header]
-            for header in interop.index_summary_columns(level="Lane")
-        }
+        headers = {header: HEADERS[header] for header in interop.index_summary_columns(level="Lane")}
         table_config = {
             "namespace": "SAV",
             "id": "sav-lane-index-metrics-summary-table",
@@ -562,16 +494,11 @@ class SAV(BaseMultiqcModule):
         for lane, lane_data in lanes:
             lane_data = lane_data.set_index("Sample Id")
             for sample, sample_data in lane_data.iterrows():
-                table_data[f"{sample} - Lane {lane}"] = sample_data.drop(
-                    "Lane"
-                ).to_dict()
+                table_data[f"{sample} - Lane {lane}"] = sample_data.drop("Lane").to_dict()
         return table_data
 
     def barcode_index_summary_table(self, data):
-        headers = {
-            header: HEADERS[header]
-            for header in interop.index_summary_columns(level="Lane")
-        }
+        headers = {header: HEADERS[header] for header in interop.index_summary_columns(level="Lane")}
         table_config = {
             "namespace": "SAV",
             "id": "sav-barcode-index-metrics-summary-table",
@@ -641,7 +568,6 @@ class SAV(BaseMultiqcModule):
         # set color scale
         cscale = mqc_colour.mqc_colour_scale()
         colors = cscale.get_colours("Dark2")
-
         # filter relevant colums
         data = data[["Lane", "% Pass Filter", "% Occupied"]]
         # split by lane
@@ -659,9 +585,7 @@ class SAV(BaseMultiqcModule):
                     if x != prev_x or y != prev_y:
                         prev_x = x
                         prev_y = y
-                        plot_data[f"Lane {lane}"].append(
-                            {"x": x, "y": y, "color": colors[lane]}
-                        )
+                        plot_data[f"Lane {lane}"].append({"x": x, "y": y, "color": colors[lane]})
 
         plot_config = {
             "id": "sav-pf-vs-occ-plot",

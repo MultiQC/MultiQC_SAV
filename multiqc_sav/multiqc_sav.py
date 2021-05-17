@@ -17,6 +17,4 @@ def update_config():
     log.info("SAV: Updating search patterns")
     # Update search patterns
     if "SAV/xml" not in config.sp:
-        config.update_dict(
-            config.sp, {"SAV/xml": {"fn_re": ".*(RunInfo|RunParameters)\.xml"}}
-        )
+        config.update_dict(config.sp, {"SAV/xml": {"fn_re": ".*(RunInfo|RunParameters)\.xml"}})

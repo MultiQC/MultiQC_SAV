@@ -42,7 +42,7 @@ This plugin adds a QC module and searches for the `RunInfo.xml` and `RunParamete
 
 The illumina directory should contain the following files the directory structure as dictated by the sequencer
 
-```
+```bash
 illumina_dir
 ├── InterOp
 │   ├── *.bin
