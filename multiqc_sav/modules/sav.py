@@ -237,7 +237,6 @@ class SAV(BaseMultiqcModule):
     - GRAPH: Qscore Histogram
     - GRAPH: %Occ/%PF
     - TABLE: Run Summary
-    - TABLE: Indexing Summary
     """
 
     def __init__(self):
@@ -266,8 +265,15 @@ class SAV(BaseMultiqcModule):
         self.load_metrics(illumina_dir)
         self.summary_qc()
         self.q_summary()
-        # self.indexing_qc()
         self.imaging_qc()
+
+    def load_metrics(self, illumina_dir) -> None:
+        log.info("Loading Run Metrics")
+        self.run_metrics = interop.read(run=illumina_dir, valid_to_load=interop.load_imaging_metrics(), finalize=True,)
+
+    #############
+    # RUN INFO
+    #############
 
     def set_run_info(self, run_info_xml: str) -> None:
         log.info("Loading Run Info")
@@ -318,10 +324,6 @@ class SAV(BaseMultiqcModule):
                 </div>
             """,
         )
-
-    def load_metrics(self, illumina_dir) -> None:
-        log.info("Loading Run Metrics")
-        self.run_metrics = interop.read(run=illumina_dir, valid_to_load=interop.load_imaging_metrics(), finalize=True,)
 
     #############
     # SUMMARY QC
@@ -538,6 +540,8 @@ class SAV(BaseMultiqcModule):
         plot_config = {
             "id": "sav-qscore-heatmap-plot",
             "title": "SAV: Qscore Heatmap",
+            "xTitle": "Cycle",
+            "yTitle": "Qscore",
         }
         return heatmap.plot(plot_data, plot_config)
 
@@ -722,64 +726,3 @@ class SAV(BaseMultiqcModule):
             "ymax": 100,
         }
         return scatter.plot(data, plot_config)
-
-    #############
-    # WIP: INDEXING QC
-    #############
-    def indexing_qc(self) -> None:
-        log.info("Gathering Lane Indexing metrics")
-        index_summary_lane = pd.DataFrame(interop.index_summary(self.run_metrics, level="Lane"))
-        self.add_section(
-            name="Indexing Lane Metrics",
-            anchor="sav-lane-index",
-            description="Indexing metrics per Lane",
-            plot=self.lane_index_summary_table(self.parse_lane_index_summary(index_summary_lane)),
-        )
-
-        log.info("Gathering Barcode Indexing metrics")
-        try:
-            index_summary_barcode = pd.DataFrame(interop.indexing(self.run_metrics, level="Barcode"))
-
-            self.add_section(
-                name="Indexing Barcode Metrics",
-                anchor="sav-barcode-index",
-                description="Indexing metrics per Barcode",
-                plot=self.lane_index_summary_table(self.parse_lane_index_summary(index_summary_barcode)),
-            )
-        except IndexError as e:
-            log.warning(f"Unable to parse Barcode Indexing Metrics: {e}")
-
-    def parse_lane_index_summary(self, data):
-        data = data.set_index("Lane")
-        table_data = {}
-        for lane, lane_data in data.iterrows():
-            table_data[f"Lane {lane}"] = lane_data.to_dict()
-        return table_data
-
-    def lane_index_summary_table(self, data):
-        headers = {header: HEADERS[header] for header in interop.index_summary_columns(level="Lane")}
-        table_config = {
-            "namespace": "SAV",
-            "id": "sav-lane-index-metrics-summary-table",
-            "col1_header": "Lane",
-        }
-
-        return table.plot(data, headers, table_config,)
-
-    def parse_barcode_index_summary(self, data):
-        data.set_index("Id")
-        table_data = {}
-        lanes = data.groupby("Lane")
-        for lane, lane_data in lanes:
-            lane_data = lane_data.set_index("Sample Id")
-            for sample, sample_data in lane_data.iterrows():
-                table_data[f"{sample} - Lane {lane}"] = sample_data.drop("Lane").to_dict()
-        return table_data
-
-    def barcode_index_summary_table(self, data):
-        headers = {header: HEADERS[header] for header in interop.index_summary_columns(level="Lane")}
-        table_config = {
-            "namespace": "SAV",
-            "id": "sav-barcode-index-metrics-summary-table",
-            "col1_header": "Sample - Lane",
-        }
