@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Dict
 
 import interop
+import numpy
 import pandas as pd
 from interop import py_interop_plot
 from multiqc import config
@@ -502,7 +503,8 @@ class SAV(BaseMultiqcModule):
         self.add_section(
             name="Qscore Heatmap",
             anchor="sav-qscore-heatmap",
-            description="The Qscore Heat Map provides an overview of quality scores across cycles.",  # plot=self.qscore_heatmap_plot(),
+            description="The Qscore Heat Map provides an overview of quality scores across cycles.",
+            plot=self.qscore_heatmap_plot(),
         )
 
         # - GRAPH: Qscore Histogram
@@ -522,9 +524,17 @@ class SAV(BaseMultiqcModule):
 
         :return: heatmap plot object to be used in a MultiQC section
         """
-        plot_data = {}
-        heatmap_data = py_interop_plot.heatmap_data()
-        py_interop_plot.plot_qscore_heatmap(self.run_metrics, heatmap_data)
+        options = py_interop_plot.filter_options(self.run_metrics.run_info().flowcell().naming_method())
+        rows = py_interop_plot.count_rows_for_heatmap(self.run_metrics)
+        cols = py_interop_plot.count_columns_for_heatmap(self.run_metrics)
+        dataBuffer = numpy.zeros((rows, cols), dtype=numpy.float32)
+        data = py_interop_plot.heatmap_data()
+        try:
+            py_interop_plot.plot_qscore_heatmap(self.run_metrics, options, data, dataBuffer.ravel())
+        except py_interop_plot.invalid_filter_option:
+            pass
+        plot_data = dataBuffer.tolist()
+
         plot_config = {
             "id": "sav-qscore-heatmap-plot",
             "title": "SAV: Qscore Heatmap",
