@@ -136,3 +136,6 @@ multiqc_data
 # test data
 test
 data
+
+# MacOS cruft
+.DS_Store
