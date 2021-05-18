@@ -245,6 +245,11 @@ class SAV(BaseMultiqcModule):
             name="Illumina SAV", anchor="sav", info=" - Sequencing Metrics from Illumina sequencers",
         )
 
+        # Set variables
+        run_info_xml = ""
+        run_parameters_xml = ""
+        illumina_dir = ""
+
         # Check if required files are found
         for f in self.find_log_files("SAV/xml"):
             if f["fn"] == "RunInfo.xml":
