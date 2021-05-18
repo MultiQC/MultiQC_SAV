@@ -1,7 +1,6 @@
 # [<img src="docs/images/MultiQC_logo.png" width="250" title="MultiQC">](https://github.com/ewels/MultiQC)
 
 ![Build status](https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV/actions/workflows/linux.yaml/badge.svg)
-![Lint status](https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV/actions/workflows/lint_code.yaml/badge.svg)
 
 **MultiQC_SAV is a plugin for MultiQC, leveraging the [InterOp python API](https://github.com/Illumina/interop) to generate the most used tables and graphs from the Illumina SAV**
 

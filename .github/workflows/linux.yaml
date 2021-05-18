@@ -37,7 +37,7 @@ jobs:
         run: multiqc -m SAV test_data/HiSeq
 
       - name: NextSeq
-        run: multiqc -m SAV test_data/NextSeq
+        run: multiqc -m SAV test_data/NextSeq500
 
       - name: NovaSeq
         run: multiqc -m SAV test_data/NovaSeq
