@@ -13,6 +13,10 @@ For more information about Illumina SAV, see [the Illumina support page](https:/
 
 The MultiQC_SAV plugin parses the InterOp files in an Illumina Sequencer output directory and generates tables and graphs of the most important metrics
 
+## Example
+
+An example report can be found [here](docs/example/NextSeq500_report.html)
+
 ## Installation
 
 This plugin can be installed using the following methods
