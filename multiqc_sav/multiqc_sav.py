@@ -13,7 +13,14 @@ config.multiqc_sav_version = get_distribution("multiqc_sav").version
 log.info("Running MultiQC SAV Plugin v{}".format(config.multiqc_sav_version))
 
 
-def update_config():
+def update_config() -> None:
+    """
+    Update MultiQC config object
+    * Update module order
+    * Disable unnecessary modules to avoid duplicate data
+    * Update search patterns
+    """
+
     log.info("SAV: Updating search patterns")
     # Add module to module order
     config.module_order.append({"SAV": {"module_tag": ["DNA", "RNA", "BCL", "Demultiplex"]}})

@@ -7,6 +7,7 @@ import re
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime
+from typing import Dict
 
 import interop
 import pandas as pd
@@ -267,7 +268,7 @@ class SAV(BaseMultiqcModule):
         # self.indexing_qc()
         self.imaging_qc()
 
-    def set_run_info(self, run_info_xml):
+    def set_run_info(self, run_info_xml: str) -> None:
         log.info("Loading Run Info")
         run_info_xml = ET.parse(run_info_xml)
         root = run_info_xml.getroot()
@@ -317,7 +318,7 @@ class SAV(BaseMultiqcModule):
             """,
         )
 
-    def load_metrics(self, illumina_dir):
+    def load_metrics(self, illumina_dir) -> None:
         log.info("Loading Run Metrics")
         self.run_metrics = interop.read(run=illumina_dir, valid_to_load=interop.load_imaging_metrics(), finalize=True,)
 
@@ -325,7 +326,12 @@ class SAV(BaseMultiqcModule):
     # SUMMARY QC
     #############
 
-    def summary_qc(self):
+    def summary_qc(self) -> None:
+        """
+        Generate MultiQC sections related to Summary tables
+
+        :return: None
+        """
         log.info("Gathering Read summary metrics")
         summary_read = pd.DataFrame(interop.summary(self.run_metrics, level="Read"))
         summary_nonindex = pd.DataFrame(interop.summary(self.run_metrics, level="NonIndex"))
@@ -357,7 +363,14 @@ class SAV(BaseMultiqcModule):
             plot=self.clusters_lane_plot(self.parse_lane_summary(summary_lane)),
         )
 
-    def parse_read_summary(self, read_metrics, non_index_metrics, total_metrics):
+    def parse_read_summary(
+        self, read_metrics: pd.DataFrame, non_index_metrics: pd.DataFrame, total_metrics: pd.DataFrame
+    ) -> Dict:
+        """
+        Parse "Read Summary" table DataFrame
+
+        :return: Dict containing table data
+        """
         table_data: dict = self._parse_reads(read_metrics)
 
         for read, data in non_index_metrics.iterrows():
@@ -368,7 +381,12 @@ class SAV(BaseMultiqcModule):
 
         return table_data
 
-    def read_summary_table(self, data):
+    def read_summary_table(self, data: pd.DataFrame) -> table.plot:
+        """
+        Format "Read Summary" data dict and add plot config.
+
+        :return: table object to be used in a MultiQC section
+        """
         headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
 
         table_config = {
@@ -379,7 +397,12 @@ class SAV(BaseMultiqcModule):
 
         return table.plot(data, headers, table_config)
 
-    def parse_lane_summary(self, data):
+    def parse_lane_summary(self, data: pd.DataFrame) -> Dict:
+        """
+        Parse "Lane Summary" table DataFrame
+
+        :return: Dict containing table data
+        """
         lanes = data.groupby("Lane")
         table_data: dict = {}
         for lane, reads in lanes:
@@ -389,7 +412,13 @@ class SAV(BaseMultiqcModule):
 
         return table_data
 
-    def lane_summary_table(self, data):
+    def lane_summary_table(self, data: Dict) -> table.plot:
+        """
+        Format "Lane Summary" data dict and add plot config.
+
+        :return: table object to be used in a MultiQC section
+        """
+
         headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
         table_config = {
             "namespace": "SAV",
@@ -399,7 +428,13 @@ class SAV(BaseMultiqcModule):
 
         return table.plot(data, headers, table_config,)
 
-    def clusters_lane_plot(self, data):
+    def clusters_lane_plot(self, data: Dict) -> bargraph.plot:
+        """
+        Format "Clusters per Lane" data dict and add plot config.
+
+        :return: bar plot object to be used in a MultiQC section
+        """
+
         cluster_data = {}
         read_data = {}
         for key, value in data.items():
@@ -438,7 +473,12 @@ class SAV(BaseMultiqcModule):
 
         return bargraph.plot([cluster_data, read_data], cats, plot_config)
 
-    def _parse_reads(self, reads_df, key_prefix: str = None):
+    def _parse_reads(self, reads_df: pd.DataFrame, key_prefix: str = None) -> Dict:
+        """
+        Utility function to parse a "Reads" dataframe to dict
+
+        :return: Reads dict
+        """
         reads_dict = {}
         reads_df = reads_df.set_index("ReadNumber")
         for read, data in reads_df.iterrows():
@@ -451,29 +491,54 @@ class SAV(BaseMultiqcModule):
     #############
     # Q SUMMARY
     #############
-    def q_summary(self):
+    def q_summary(self) -> None:
+        """
+        Generate MultiQC sections related to Qscore
+
+        :return: None
+        """
         # - GRAPH: Qscore Heatmap
         log.info("Generating 'Qscore Heatmap' plot")
         self.add_section(
-            name="Qscore Heatmap", anchor="sav-qscore-heatmap", description="",  # plot=self.qscore_heatmap_plot(),
+            name="Qscore Heatmap",
+            anchor="sav-qscore-heatmap",
+            description="The Qscore Heat Map provides an overview of quality scores across cycles.",  # plot=self.qscore_heatmap_plot(),
         )
 
         # - GRAPH: Qscore Histogram
         log.info("Generating 'Qscore Histogram' plot")
         self.add_section(
-            name="Qscore Histogram", anchor="sav-qscore-histogram", description="", plot=self.qscore_histogram_plot(),
+            name="Qscore Histogram",
+            anchor="sav-qscore-histogram",
+            description="Qscore Histogram graphs the number of bases by quality score. The quality score is cumulative for the current cycle. Only bases from reads that pass the quality filter are included.",
+            plot=self.qscore_histogram_plot(),
         )
 
-    def qscore_heatmap_plot(self):
-        plot_data = {}
+    def qscore_heatmap_plot(self) -> heatmap.plot:
+        """
+        Get heatmap data from run_metrics object
+        Note: this function has *much* room for improvement, but we need to wait for further developments in the InterOp library.
+        In the mean time, this will have to do.
 
+        :return: heatmap plot object to be used in a MultiQC section
+        """
+        plot_data = {}
+        heatmap_data = py_interop_plot.heatmap_data()
+        py_interop_plot.plot_qscore_heatmap(self.run_metrics, heatmap_data)
         plot_config = {
             "id": "sav-qscore-heatmap-plot",
             "title": "SAV: Qscore Heatmap",
         }
         return heatmap.plot(plot_data, plot_config)
 
-    def qscore_histogram_plot(self):
+    def qscore_histogram_plot(self) -> linegraph.plot:
+        """
+        Get histogram data from run_metrics object
+        Note: this function has *much* room for improvement, but we need to wait for further developments in the InterOp library
+        In the mean time, this will have to do.
+
+        :return: linegraph plot object to be used in a MultiQC section
+        """
         bar_data = py_interop_plot.bar_plot_data()
         options = py_interop_plot.filter_options(self.run_metrics.run_info().flowcell().naming_method())
         py_interop_plot.plot_qscore_histogram(self.run_metrics, options, bar_data)
@@ -507,7 +572,15 @@ class SAV(BaseMultiqcModule):
     #############
     # IMAGING QC
     #############
-    def imaging_qc(self):
+    def imaging_qc(self) -> None:
+        """
+        Generate MultiQC sections related to Imaging.
+        This includes:
+            - Plot: Intensity/Cycle/Channel
+            - Plot: %Occ/%PF
+
+        :return: None
+        """
         log.info("Gathering Imaging metrics")
         imaging = pd.DataFrame(interop.imaging(self.run_metrics))
 
@@ -533,7 +606,12 @@ class SAV(BaseMultiqcModule):
                 plot=self.occ_vs_pf_plot(plot_data.get("occ_vs_pf", [])),
             )
 
-    def parse_imaging_table(self, data):
+    def parse_imaging_table(self, data: pd.DataFrame) -> Dict:
+        """
+        Parse full imaging table DataFrame
+
+        :return: Dict containing data for intesity per cylce plot (key:"intensity_cycle") and %occ vs %pf plot (key: ""occ_vs_pf")
+        """
         # set color scale for occ_pf
         cscale = mqc_colour.mqc_colour_scale()
         colors = cscale.get_colours("Dark2")
@@ -581,13 +659,15 @@ class SAV(BaseMultiqcModule):
                 else:
                     occ_pf = {}
 
-                # q_heatmap
-
-                # q_histogram
-
         return {"intensity_cycle": intensity_cycle, "occ_vs_pf": occ_pf}
 
-    def intensity_cycle_plot(self, data):
+    def intensity_cycle_plot(self, data: Dict) -> linegraph.plot:
+        """
+        Format Intensity per Cycle data dict and add plot config.
+
+        :return: linegraph plot object to be used in a MultiQC section
+        """
+
         # get keys from data
         key_color_dict = {}
         for key in data:
@@ -614,7 +694,13 @@ class SAV(BaseMultiqcModule):
 
         return linegraph.plot(data, plot_config)
 
-    def occ_vs_pf_plot(self, data):
+    def occ_vs_pf_plot(self, data: Dict) -> scatter.plot:
+        """
+        Format %Occ vs %PF data dict and add plot config.
+
+        :return: scatter plot object to be used in a MultiQC section
+        """
+
         plot_config = {
             "id": "sav-pf-vs-occ-plot",
             "title": "SAV: % Passing Filter vs % Occupied",
@@ -630,7 +716,7 @@ class SAV(BaseMultiqcModule):
     #############
     # WIP: INDEXING QC
     #############
-    def indexing_qc(self):
+    def indexing_qc(self) -> None:
         log.info("Gathering Lane Indexing metrics")
         index_summary_lane = pd.DataFrame(interop.index_summary(self.run_metrics, level="Lane"))
         self.add_section(
