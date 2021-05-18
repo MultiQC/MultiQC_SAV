@@ -606,7 +606,7 @@ class SAV(BaseMultiqcModule):
             self.add_section(
                 name="Intensity per Cycle",
                 anchor="sav-intensity-cycle",
-                description="",
+                description="Intensity by color and cycle of the 90% percentile of the data for each tile",
                 plot=self.intensity_cycle_plot(plot_data.get("intenstity_cycle", [])),
             )
 
