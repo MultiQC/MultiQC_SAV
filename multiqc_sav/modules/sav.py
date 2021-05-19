@@ -263,7 +263,7 @@ class SAV(BaseMultiqcModule):
         ) > 0:
             illumina_dir = os.path.dirname(run_info_xml)
         else:
-            log.warning("Skipping MultiQC_SAV, required files were not found or not in the right structure.")
+            log.debug("Skipping MultiQC_SAV, required files were not found or not in the right structure.")
             return None
 
         self.set_run_info(run_info_xml)
@@ -540,15 +540,33 @@ class SAV(BaseMultiqcModule):
             py_interop_plot.plot_qscore_heatmap(self.run_metrics, options, data, dataBuffer.ravel())
         except py_interop_plot.invalid_filter_option:
             pass
-        plot_data = dataBuffer.tolist()
+        plot_data = dataBuffer.transpose().tolist()
+        # cycles
+        x_cats = list(range(0, cols))
+        # qscore
+        y_cats = list(range(0, rows))
 
         plot_config = {
             "id": "sav-qscore-heatmap-plot",
             "title": "SAV: Qscore Heatmap",
             "xTitle": "Cycle",
             "yTitle": "Qscore",
+            "square": False,
+            "colstops": [
+                [0, "#FFFFFF"],
+                [0.1, "#1a9850"],
+                [0.2, "#66bd63"],
+                [0.3, "#a6d96a"],
+                [0.4, "#d9ef8b"],
+                [0.5, "#ffffbf"],
+                [0.6, "#fee08b"],
+                [0.7, "#fdae61"],
+                [0.8, "#f46d43"],
+                [0.9, "#d73027"],
+                [1, "#a50026"],
+            ],
         }
-        return heatmap.plot(plot_data, plot_config)
+        return heatmap.plot(plot_data, x_cats, y_cats, plot_config)
 
     def qscore_histogram_plot(self) -> linegraph.plot:
         """
