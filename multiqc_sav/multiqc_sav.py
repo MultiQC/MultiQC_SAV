@@ -21,7 +21,7 @@ def update_config() -> None:
     * Update search patterns
     """
 
-    log.debug("Updating config")
+    log.debug("SAV - Updating config")
     # Add module to module order
     config.module_order.append({"SAV": {"module_tag": ["DNA", "RNA", "BCL", "Demultiplex"]}})
 
