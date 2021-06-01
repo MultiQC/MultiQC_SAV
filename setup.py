@@ -16,7 +16,7 @@ setup(
     description="MultiQC plugin for Illumina SAV Graphs and tables",
     long_description=__doc__,
     keywords="bioinformatics",
-    url="https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV",
+    url="https://github.com/MultiQC/MultiQC_SAV",
     license="MIT",
     packages=find_packages(),
     include_package_data=True,

@@ -1,6 +1,6 @@
 # [<img src="docs/images/MultiQC_logo.png" width="250" title="MultiQC">](https://github.com/ewels/MultiQC)
 
-![Build status](https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV/actions/workflows/linux.yaml/badge.svg)
+![Build status](https://github.com/MultiQC/MultiQC_SAV/actions/workflows/linux.yaml/badge.svg)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/multiqc_sav/README.html)
 [![Anaconda-Server Badge](https://anaconda.org/bioconda/multiqc_sav/badges/downloads.svg)](https://anaconda.org/bioconda/multiqc_sav)
 [![Anaconda-Server Badge](https://anaconda.org/bioconda/multiqc_sav/badges/latest_release_date.svg)](https://anaconda.org/bioconda/multiqc_sav)
@@ -39,7 +39,7 @@ conda install -c bioconda multiqc_sav
 - using `setuptools`:
 
 ```bash
-git clone https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV
+git clone https://github.com/MultiQC/MultiQC_SAV
 cd MultiQC_SAV
 python setup.py install
 ```
@@ -60,3 +60,7 @@ illumina_dir
 ├── RunParameters.xml
 
 ```
+
+### Contributors
+
+- Matthias De Smet (@matthdsm)(@CenterForMedicalGeneticsGhent)
