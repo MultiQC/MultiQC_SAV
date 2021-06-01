@@ -63,4 +63,4 @@ illumina_dir
 
 ### Contributors
 
-- Matthias De Smet [@matthdsm](@matthdsm)[@CenterForMedicalGeneticsGhent](@CenterForMedicalGeneticsGhent)
+- Matthias De Smet [@matthdsm](https://github.com/matthdsm), [@CenterForMedicalGeneticsGhent](https://github.com/CenterForMedicalGeneticsGhent)
