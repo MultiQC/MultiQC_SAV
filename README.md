@@ -27,7 +27,7 @@ This plugin can be installed using the following methods
 - using `pip`:
 
 ```bash
-pip install --upgrade --force-reinstall git+https://github.com/CenterForMedicalGeneticsGhent/MultiQC_SAV.git
+pip install --upgrade --force-reinstall git+https://github.com/MultiQC/MultiQC_SAV.git
 ```
 
 - using `conda`:
@@ -63,4 +63,4 @@ illumina_dir
 
 ### Contributors
 
-- Matthias De Smet (@matthdsm)(@CenterForMedicalGeneticsGhent)
+- Matthias De Smet [@matthdsm](@matthdsm)[@CenterForMedicalGeneticsGhent](@CenterForMedicalGeneticsGhent)
