@@ -252,9 +252,9 @@ class SAV(BaseMultiqcModule):
 
         # Check if required files are found
         for f in self.find_log_files("SAV/xml"):
-            if f["fn"] == "RunInfo.xml":
+            if re.match(r".*[Rr]un[Ii]nfo\.xml", f["fn"]):
                 run_info_xml = os.path.join(f["root"], f["fn"])
-            if f["fn"] == "RunParameters.xml":
+            if re.match(r".*[Rr]un[Pp]arameters\.xml", f["fn"]):
                 run_parameters_xml = os.path.join(f["root"], f["fn"])
 
         # Assume single run for now
