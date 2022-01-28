@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<RunParameters xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SampleSheetFilePath>/home/ilmnuser/Desktop/Samplesheets/HyperCap_runNXQ004_1.csv</SampleSheetFilePath>
+  <PlannedCycles>
+    <Read1>151</Read1>
+    <Index1>8</Index1>
+    <Index2>8</Index2>
+    <Read2>151</Read2>
+  </PlannedCycles>
+  <CompletedCycles>
+    <Read1>151</Read1>
+    <Index1>8</Index1>
+    <Index2>8</Index2>
+    <Read2>151</Read2>
+  </CompletedCycles>
+  <InstrumentSerialNumber>VH00559</InstrumentSerialNumber>
+  <InstrumentType>NextSeq 2000</InstrumentType>
+  <ApplicationName>NextSeq 1000/2000 Control Software</ApplicationName>
+  <ApplicationVersion>1.4.1.39716</ApplicationVersion>
+  <FlowCellSerialNumber>AAANY2JM5</FlowCellSerialNumber>
+  <FlowCellPartNumber>20049921</FlowCellPartNumber>
+  <FlowCellLotNumber>20600411</FlowCellLotNumber>
+  <FlowCellExpirationDate>2022-12-17</FlowCellExpirationDate>
+  <FlowCellVersion>2</FlowCellVersion>
+  <FlowCellMode>NextSeq 1000/2000 P1 Flow Cell Cartridge</FlowCellMode>
+  <CartridgeSerialNumber>EC1044520-EC13</CartridgeSerialNumber>
+  <CartridgePartNumber>20049920</CartridgePartNumber>
+  <CartridgeLotNumber>20566038</CartridgeLotNumber>
+  <CartridgeExpirationDate>2022-09-24</CartridgeExpirationDate>
+  <CartridgeVersion>3</CartridgeVersion>
+  <CartridgeMode>NextSeq 1000/2000 P1 Reagent Cartridge (338 Cycles)</CartridgeMode>
+  <ExperimentName>HyperCap_RunNXQ004</ExperimentName>
+  <RecipeName>LO-Seq</RecipeName>
+  <RecipeVersion>1.0</RecipeVersion>
+  <RtaVersion>3.9.25</RtaVersion>
+  <RunStartTime>2022-01-12T13:49:36.9939615Z</RunStartTime>
+  <RunEndTime>2022-01-13T09:54:12.8580473Z</RunEndTime>
+  <RunElapsedTime>0:20:4:35:864 (d:hr:min:s:ms)</RunElapsedTime>
+  <RunCounter>4</RunCounter>
+  <CimVersion>cim@1.4.3</CimVersion>
+  <ChmVersion>chm@1.4.3</ChmVersion>
+  <ImbVersion>imb@1.4.3</ImbVersion>
+  <CibFpgaVersion>0x3200000a</CibFpgaVersion>
+  <CopyServiceRunId>18B3D0323A50AF45</CopyServiceRunId>
+  <CopyServiceVersion>2.4.1.2497</CopyServiceVersion>
+  <BaseSpaceRunId>8030101</BaseSpaceRunId>
+  <BsshMode>RunMonitoringAndStorage</BsshMode>
+  <RunSetupMode>Manual</RunSetupMode>
+  <SecondaryAnalysisMode>None</SecondaryAnalysisMode>
+  <OutputFolder>/media/cmgg_upload/NextSeq2000_VH00559/220112_VH00559_4_AAANY2JM5</OutputFolder>
+  <SkipObdd>false</SkipObdd>
+  <PurgeReagentCartridge>true</PurgeReagentCartridge>
+  <CustomPrimerSelections>
+    <Read1>None</Read1>
+    <Index1>None</Index1>
+    <Index2>None</Index2>
+    <Read2>None</Read2>
+  </CustomPrimerSelections>
+</RunParameters>
