@@ -291,9 +291,20 @@ class SAV(BaseMultiqcModule):
             instrument_id = [fc.text for fc in run.iter("Instrument")][0]
             run_date = [fc.text for fc in run.iter("Date")][0]
             try:
+                # MiSeq/NextSeq500/HiSeq3000
                 parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%y%m%d"), "%d-%m-%Y")
             except ValueError:
-                parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y")
+                try:
+                    # NovaSeq6000
+                    parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y")
+                except ValueError:
+                    try:
+                        # NextSeq2000
+                        parsed_run_date = datetime.strftime(
+                            datetime.strptime(run_date, "%Y-%m-%dT%H:%M:%SZ"), "%d-%m-%Y"
+                        )
+                    except ValueError:
+                        parsed_run_date = None
 
             read_info = ""
             for read in run.iter("Read"):
