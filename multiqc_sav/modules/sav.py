@@ -304,7 +304,7 @@ class SAV(BaseMultiqcModule):
                             datetime.strptime(run_date, "%Y-%m-%dT%H:%M:%SZ"), "%d-%m-%Y"
                         )
                     except ValueError:
-                        parsed_run_date = None
+                        parsed_run_date = run_date
 
             read_info = ""
             for read in run.iter("Read"):
