@@ -35,4 +35,5 @@ def update_config() -> None:
 
     # Update search patterns
     if "SAV/xml" not in config.sp:
-        config.update_dict(config.sp, {"SAV/xml": {"fn_re": ".*([Rr]un[Ii]nfo|[Rr]un[Pp]arameters)\.xml"}})
+        config.update_dict(config.sp, {"SAV/xml": {"fn_re": ".*([Rr]un[Ii]nfo|[Rr]un[Pp]arameters)\.xml", "shared": True}})
+    config.update_dict(config.sp, {"bclconvert/runinfo": {"fn": "RunInfo.xml", "shared": True}})
