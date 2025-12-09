@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
@@ -44,7 +45,7 @@ Homepage = "https://github.com/MultiQC/MultiQC_SAV"
 Repository = "https://github.com/MultiQC/MultiQC_SAV"
 
 [project.entry-points."multiqc.hooks.v1"]
-"SAV = multiqc_sav.multiqc_sav:sav",
+SAV = "multiqc_sav.multiqc_sav:sav"
 
 [tool.setuptools.packages.find]
 include = ["multiqc_sav*"]

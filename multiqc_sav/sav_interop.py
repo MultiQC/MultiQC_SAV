@@ -19,6 +19,14 @@ from multiqc.utils import mqc_colour
 
 log = logging.getLogger(__name__)
 
+try:
+    import interop
+    from interop import py_interop_plot
+except ImportError:
+    log.warning("InterOp library not installed. Run: pip install interop")
+    exit()
+
+
 # Table headers for summary metrics
 HEADERS: Dict[str, Dict] = {
     "Error Rate": {
@@ -245,12 +253,6 @@ def add_interop_sections(module) -> None:
     Args:
         module: The SAV MultiqcModule instance
     """
-    try:
-        import interop
-        from interop import py_interop_plot
-    except ImportError:
-        log.warning("InterOp library not installed. Run: pip install interop")
-        return
 
     # Find the run directory from the module's data
     for _, data in module.data_by_sample.items():
@@ -277,19 +279,19 @@ def add_interop_sections(module) -> None:
             continue
 
         # Add summary sections
-        _add_summary_sections(module, run_metrics, interop)
+        _add_summary_sections(module, run_metrics)
 
         # Add Q-score sections
-        _add_qscore_sections(module, run_metrics, py_interop_plot)
+        _add_qscore_sections(module, run_metrics)
 
         # Add imaging sections
-        _add_imaging_sections(module, run_metrics, interop)
+        _add_imaging_sections(module, run_metrics)
 
         # Only process first run for now
         break
 
 
-def _add_summary_sections(module, run_metrics, interop) -> None:
+def _add_summary_sections(module, run_metrics) -> None:
     """Add read and lane summary table sections."""
     log.info("Gathering summary metrics")
 
@@ -353,7 +355,7 @@ def _add_summary_sections(module, run_metrics, interop) -> None:
         log.debug("Could not generate lane summary: %s", e)
 
 
-def _add_qscore_sections(module, run_metrics, py_interop_plot) -> None:
+def _add_qscore_sections(module, run_metrics) -> None:
     """Add Q-score heatmap and histogram sections."""
     log.info("Generating Q-score plots")
 
@@ -455,7 +457,7 @@ def _add_qscore_sections(module, run_metrics, py_interop_plot) -> None:
         log.debug("Could not generate Q-score histogram: %s", e)
 
 
-def _add_imaging_sections(module, run_metrics, interop) -> None:
+def _add_imaging_sections(module, run_metrics) -> None:
     """Add imaging-related sections (intensity per cycle, % PF vs % occupied)."""
     log.info("Gathering imaging metrics")
 
