@@ -13,7 +13,6 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-
 from multiqc import config
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
@@ -254,7 +253,7 @@ def add_interop_sections(module) -> None:
         return
 
     # Find the run directory from the module's data
-    for s_name, data in module.data_by_sample.items():
+    for _, data in module.data_by_sample.items():
         run_dir = data.get("_run_dir")
         if not run_dir:
             continue
@@ -262,10 +261,10 @@ def add_interop_sections(module) -> None:
         # Check for InterOp directory
         interop_files = glob.glob(os.path.join(run_dir, "InterOp", "*.bin"))
         if not interop_files:
-            log.debug(f"No InterOp files found in {run_dir}")
+            log.debug("No InterOp files found in %s", run_dir)
             continue
 
-        log.info(f"Loading InterOp metrics from {run_dir}")
+        log.info("Loading InterOp metrics from %s", run_dir)
 
         try:
             run_metrics = interop.read(
@@ -273,8 +272,8 @@ def add_interop_sections(module) -> None:
                 valid_to_load=interop.load_imaging_metrics(),
                 finalize=True,
             )
-        except Exception as e:
-            log.warning(f"Failed to load InterOp metrics from {run_dir}: {e}")
+        except OSError as e:
+            log.warning("Failed to load InterOp metrics from %s: %s", run_dir, str(e))
             continue
 
         # Add summary sections
@@ -309,7 +308,7 @@ def _add_summary_sections(module, run_metrics, interop) -> None:
                 description="Summary metrics per Read",
                 plot=table.plot(
                     read_data,
-                    headers,
+                    headers if isinstance(headers, dict) else None,  # type: ignore[arg-type]
                     pconfig={
                         "title": "SAV: Read Metrics Summary",
                         "namespace": "SAV",
@@ -318,8 +317,8 @@ def _add_summary_sections(module, run_metrics, interop) -> None:
                     },
                 ),
             )
-    except Exception as e:
-        log.debug(f"Could not generate read summary: {e}")
+    except (ValueError, TypeError) as e:
+        log.debug("Could not generate read summary: %s", e)
 
     try:
         summary_lane = pd.DataFrame(interop.summary(run_metrics, level="Lane"))
@@ -333,7 +332,7 @@ def _add_summary_sections(module, run_metrics, interop) -> None:
                 description="Summary metrics per Lane per Read",
                 plot=table.plot(
                     lane_data,
-                    headers,
+                    headers if isinstance(headers, dict) else None,  # type: ignore[arg-type]
                     pconfig={
                         "title": "SAV: Lane Metrics Summary",
                         "namespace": "SAV",
@@ -350,8 +349,8 @@ def _add_summary_sections(module, run_metrics, interop) -> None:
                 description="Total Cluster/Read count per Lane",
                 plot=_clusters_lane_plot(lane_data),
             )
-    except Exception as e:
-        log.debug(f"Could not generate lane summary: {e}")
+    except (ValueError, TypeError) as e:
+        log.debug("Could not generate lane summary: %s", e)
 
 
 def _add_qscore_sections(module, run_metrics, py_interop_plot) -> None:
@@ -409,8 +408,8 @@ def _add_qscore_sections(module, run_metrics, py_interop_plot) -> None:
                     },
                 ),
             )
-    except Exception as e:
-        log.debug(f"Could not generate Q-score heatmap: {e}")
+    except (ValueError, TypeError) as e:
+        log.debug("Could not generate Q-score heatmap: %s", e)
 
     # Q-score histogram
     try:
@@ -452,8 +451,8 @@ def _add_qscore_sections(module, run_metrics, py_interop_plot) -> None:
                     },
                 ),
             )
-    except Exception as e:
-        log.debug(f"Could not generate Q-score histogram: {e}")
+    except (ValueError, TypeError) as e:
+        log.debug("Could not generate Q-score histogram: %s", e)
 
 
 def _add_imaging_sections(module, run_metrics, interop) -> None:
@@ -481,8 +480,8 @@ def _add_imaging_sections(module, run_metrics, interop) -> None:
                 description="% Clusters passing filter vs % Wells Occupied",
                 plot=_occ_vs_pf_plot(plot_data["occ_vs_pf"]),
             )
-    except Exception as e:
-        log.debug(f"Could not generate imaging plots: {e}")
+    except (ValueError, TypeError) as e:
+        log.debug("Could not generate imaging plots: %s", e)  # noqa: PD011
 
 
 def _parse_read_summary(
@@ -538,7 +537,11 @@ def _parse_imaging_table(data: pd.DataFrame) -> Dict:
     intensity_cycle: Dict = {}
 
     for lane, lane_data in per_lane:
-        lane = int(lane)
+        lane_int = None
+        try:
+            lane_int = int(float(lane))  # type: ignore[arg-type]
+        except (ValueError, TypeError):
+            lane_int = None
 
         # Determine channel set
         CHANNEL_SETS = [
@@ -552,10 +555,10 @@ def _parse_imaging_table(data: pd.DataFrame) -> Dict:
                 channels = channel_set
 
         # Initialize occupancy data for this lane
-        if f"Lane {lane}" not in occ_pf:
-            occ_pf[f"Lane {lane}"] = []
-            prev_occ = 0
-            prev_pf = 0
+        if lane_int is not None and f"Lane {lane_int}" not in occ_pf:
+            occ_pf[f"Lane {lane_int}"] = []
+        prev_occ = 0
+        prev_pf = 0
 
         for _, row in lane_data.iterrows():
             # Intensity per cycle
@@ -576,7 +579,8 @@ def _parse_imaging_table(data: pd.DataFrame) -> Dict:
                 if occ != prev_occ or pf != prev_pf:
                     prev_occ = occ
                     prev_pf = pf
-                    occ_pf[f"Lane {lane}"].append({"x": occ, "y": pf, "color": colors[lane]})
+                    if lane_int is not None and isinstance(lane_int, int) and lane_int < len(colors):
+                        occ_pf[f"Lane {lane_int}"].append({"x": occ, "y": pf, "color": colors[lane_int]})
             else:
                 occ_pf = {}
 
@@ -588,7 +592,7 @@ def _clusters_lane_plot(data: Dict):
     cluster_data: Dict = {}
     read_data: Dict = {}
 
-    for key, value in data.items():
+    for value in data.values():
         lane = int(value["Lane"])
         lane_key = f"Lane {lane}"
 
