@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def sav_extra_hook(module):
+def sav(module):
     """
     Plugin hook called by the core SAV module.
 

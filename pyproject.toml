@@ -44,7 +44,7 @@ Homepage = "https://github.com/MultiQC/MultiQC_SAV"
 Repository = "https://github.com/MultiQC/MultiQC_SAV"
 
 [project.entry-points."multiqc.hooks.v1"]
-sav_extra = "multiqc_sav.multiqc_sav:sav_extra_hook"
+"SAV = multiqc_sav.multiqc_sav:sav",
 
 [tool.setuptools.packages.find]
 include = ["multiqc_sav*"]
