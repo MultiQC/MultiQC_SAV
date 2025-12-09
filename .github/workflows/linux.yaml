@@ -33,11 +33,20 @@ jobs:
       - name: MiSeq
         run: multiqc -m SAV test_data/MiSeq
 
-      - name: HiSeq
-        run: multiqc -m SAV test_data/HiSeq
+      - name: MiSeqI100
+        run: multiqc -m SAV test_data/MiSeqI100
 
-      - name: NextSeq
+      - name: HiSeq3000
+        run: multiqc -m SAV test_data/HiSeq3000
+
+      - name: NextSeq500
         run: multiqc -m SAV test_data/NextSeq500
 
-      - name: NovaSeq
-        run: multiqc -m SAV test_data/NovaSeq
+      - name: NextSeq2000
+        run: multiqc -m SAV test_data/NextSeq2000
+
+      - name: NovaSeq6000
+        run: multiqc -m SAV test_data/NovaSeq6000
+
+      - name: NovaSeqX
+        run: multiqc -m SAV test_data/NovaSeqX
