@@ -31,21 +31,24 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
-]
+]       
 requires-python = ">=3.9,<=3.13"
 dependencies = [
-    "interop>=1.7.0",
     "multiqc>=1.25",
     "pandas",
     "numpy",
+    "interop>=1.7.0,<2",
 ]
 
 [project.urls]
 Homepage = "https://github.com/MultiQC/MultiQC_SAV"
 Repository = "https://github.com/MultiQC/MultiQC_SAV"
 
+[project.entry-points."multiqc.modules.v1"]
+SAV = "multiqc_sav.modules.sav.sav:SAVModule"
+
 [project.entry-points."multiqc.hooks.v1"]
-SAV = "multiqc_sav.multiqc_sav:sav"
+before_config = "multiqc_sav.multiqc_sav:sav_execution_start"
 
 [tool.setuptools.packages.find]
 include = ["multiqc_sav*"]
@@ -68,7 +71,7 @@ multiqc_sav = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 ruff = ">=0.14.8,<0.15"
-interop = ">=1.7.0,<2"
 multiqc = ">=1.32,<2"
 pandas = ">=2.3.3,<3"
 numpy = ">=2.3.5,<3"
+pip = ">=25.3,<26"

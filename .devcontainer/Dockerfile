@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/base:jammy
+FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/base:jammy
 
 ARG PIXI_VERSION=v0.61.0
 

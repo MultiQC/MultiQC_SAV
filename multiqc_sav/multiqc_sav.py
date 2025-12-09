@@ -1,29 +1,38 @@
-"""
-MultiQC SAV Plugin - Adds InterOp-based visualizations to the core SAV module.
-
-This plugin extends the core SAV module with advanced visualizations by parsing
-Illumina InterOp binary files.
-"""
-
 import logging
 
-from multiqc_sav.sav_interop import add_interop_sections
+import importlib_metadata
+from multiqc import config
+from multiqc.utils.util_functions import update_dict
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("multiqc")
 
+def sav_execution_start():
 
-def sav(module):
-    """
-    Plugin hook called by the core SAV module.
+    # Plugin's version number defined in pyproject.toml:
+    version = importlib_metadata.version("multiqc_sav")
+    log.debug("Running MultiQC SAV Plugin v{}".format(version))
 
-    This function adds InterOp-based visualizations to the SAV module.
-    It receives the module instance and can:
-    - Add new sections with plots
-    - Augment data_by_sample with additional metrics
-    - Add general stats columns
+    log.debug("SAV - Updating config")
+    # Add module to module order
+    config.module_order.append({"SAV": {"module_tag": ["DNA", "RNA", "BCL", "Demultiplex"]}})
 
-    Args:
-        module: The SAV MultiqcModule instance
-    """
+    # Move module to the top
+    config.top_modules.append("SAV")
 
-    add_interop_sections(module)
+    # Disable InterOp module to avoid duplicate data
+    disabled_modules = ["interop"]
+    for module in disabled_modules:
+        del config.avail_modules[module]
+    log.debug("SAV - Disabled modules: {}".format(", ".join(disabled_modules)))
+
+    # Update search patterns
+    # Set RunInfo to shared for the bclconvert module
+    update_dict(config.sp, {"bclconvert/runinfo": {"fn": "RunInfo.xml", "shared": True}})
+    # Set SAV file search patterns
+    update_dict(
+        config.sp, {
+            "SAV/RunInfo": {"fn": "RunInfo.xml", "shared": True},
+            "SAV/RunParameters": {"fn": "RunParameters.xml", "shared": True},
+            "SAV/InterOp": {"fn_re": "InterOp/.*\\.bin"}
+        }
+    )

@@ -11,21 +11,16 @@ import os
 import re
 from typing import Dict, List, Optional
 
+import interop
 import numpy as np
 import pandas as pd
+from interop import py_interop_plot
 from multiqc import config
+from multiqc.base_module import BaseMultiqcModule, ModuleNoSamplesFound
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
 
 log = logging.getLogger(__name__)
-
-try:
-    import interop
-    from interop import py_interop_plot
-except ImportError:
-    log.warning("InterOp library not installed. Run: pip install interop")
-    exit()
-
 
 # Table headers for summary metrics
 HEADERS: Dict[str, Dict] = {
@@ -245,6 +240,13 @@ HEADERS: Dict[str, Dict] = {
     },
 }
 
+class SAVModule(BaseMultiqcModule):
+    def __init__(self):
+        super(SAVModule, self).__init__(
+            name="SAV",
+            anchor="SAV",
+            info=" - Illumina SAV InterOp Analysis",
+        )
 
 def add_interop_sections(module) -> None:
     """
@@ -377,8 +379,8 @@ def _add_qscore_sections(module, run_metrics) -> None:
             # data_buffer shape is (rows=qscores, cols=cycles)
             # heatmap expects: rows match ycats, cols match xcats
             plot_data = data_buffer.tolist()
-            x_cats = list(range(cols))   # cycles (x-axis)
-            y_cats = list(range(rows))   # qscores (y-axis)
+            x_cats = list(range(cols))  # cycles (x-axis)
+            y_cats = list(range(rows))  # qscores (y-axis)
 
             module.add_section(
                 name="Qscore Heatmap",

@@ -1,8 +1,9 @@
 {
     "name": "MultiQC_SAV Dev Container",
+    "runArgs": ["--platform=linux/amd64" ],
     "build": {
         "dockerfile": "Dockerfile",
-        "context": "..",
+        "context": ".."
     },
     "customizations": {
         "vscode": {
