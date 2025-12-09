@@ -1,29 +1,37 @@
 #!/usr/bin/env python
 """
-MultiQC_SAV is a plugin for MultiQC, leveraging the [InterOp python API](https://github.com/Illumina/interop)
-to generate the most used tables and graphs from the Illumina SAV
+MultiQC_SAV is a plugin for MultiQC that adds InterOp-based visualizations
+to the core SAV module, providing detailed sequencing metrics similar to
+Illumina's Sequencing Analysis Viewer application.
 """
 
 from setuptools import setup, find_packages
 
-version = "0.0.3"
+version = "0.1.0"
 
 setup(
     name="multiqc_sav",
     version=version,
     author="Matthias De Smet",
     author_email="11850640+matthdsm@users.noreply.github.com",
-    description="MultiQC plugin for Illumina SAV Graphs and tables",
+    description="MultiQC plugin for Illumina SAV InterOp visualizations",
     long_description=__doc__,
-    keywords="bioinformatics",
+    keywords="bioinformatics illumina sequencing multiqc",
     url="https://github.com/MultiQC/MultiQC_SAV",
     license="MIT",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=["interop>=1.1.23", "multiqc>=1.10", "pandas"],
+    python_requires=">=3.9",
+    install_requires=[
+        "interop>=1.1.23",
+        "multiqc>=1.25",
+        "pandas",
+        "numpy",
+    ],
     entry_points={
-        "multiqc.hooks.v1": ["config_loaded = multiqc_sav.multiqc_sav:update_config",],
-        "multiqc.modules.v1": ["SAV = multiqc_sav.modules.sav:SAV",],
+        "multiqc.hooks.v1": [
+            "sav_extra = multiqc_sav.multiqc_sav:sav_extra_hook",
+        ],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -35,7 +43,11 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
         "Operating System :: Unix",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Scientific/Engineering :: Visualization",

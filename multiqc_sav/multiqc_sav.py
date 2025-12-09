@@ -1,39 +1,28 @@
-#!/usr/bin/env python
+"""
+MultiQC SAV Plugin - Adds InterOp-based visualizations to the core SAV module.
+
+This plugin extends the core SAV module with advanced visualizations by parsing
+Illumina InterOp binary files.
+"""
 
 import logging
 
-from multiqc.utils import config
-from pkg_resources import get_distribution
-
-# Initialise the main MultiQC logger
-log = logging.getLogger("multiqc")
-
-# Save this plugin's version number (defined in setup.py) to the MultiQC config
-config.multiqc_sav_version = get_distribution("multiqc_sav").version
-log.info("Running MultiQC SAV Plugin v{}".format(config.multiqc_sav_version))
+log = logging.getLogger(__name__)
 
 
-def update_config() -> None:
+def sav_extra_hook(module):
     """
-    Update MultiQC config object
-    * Update module order
-    * Disable unnecessary modules to avoid duplicate data
-    * Update search patterns
+    Plugin hook called by the core SAV module.
+
+    This function adds InterOp-based visualizations to the SAV module.
+    It receives the module instance and can:
+    - Add new sections with plots
+    - Augment data_by_sample with additional metrics
+    - Add general stats columns
+
+    Args:
+        module: The SAV MultiqcModule instance
     """
+    from multiqc_sav.sav_interop import add_interop_sections
 
-    log.debug("SAV - Updating config")
-    # Add module to module order
-    config.module_order.append({"SAV": {"module_tag": ["DNA", "RNA", "BCL", "Demultiplex"]}})
-
-    # Move module to the top
-    config.top_modules.append("SAV")
-
-    # Disable InterOp module to avoid duplicate data
-    disabled_modules = ["interop"]
-    for module in disabled_modules:
-        del config.avail_modules[module]
-
-    # Update search patterns
-    if "SAV/xml" not in config.sp:
-        config.update_dict(config.sp, {"SAV/xml": {"fn_re": ".*([Rr]un[Ii]nfo|[Rr]un[Pp]arameters)\.xml", "shared": True}})
-    config.update_dict(config.sp, {"bclconvert/runinfo": {"fn": "RunInfo.xml", "shared": True}})
+    add_interop_sections(module)

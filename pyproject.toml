@@ -1,4 +1,57 @@
-[tool.black]
-line-length = 120
-target_version = ['py36','py37','py38']
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
+[project]
+name = "multiqc_sav"
+version = "0.1.0"
+description = "MultiQC plugin for Illumina SAV InterOp visualizations"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Matthias De Smet", email = "11850640+matthdsm@users.noreply.github.com"},
+]
+keywords = ["bioinformatics", "illumina", "sequencing", "multiqc"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "interop>=1.1.23",
+    "multiqc>=1.25",
+    "pandas",
+    "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/MultiQC/MultiQC_SAV"
+Repository = "https://github.com/MultiQC/MultiQC_SAV"
+
+[project.entry-points."multiqc.hooks.v1"]
+sav_extra = "multiqc_sav.multiqc_sav:sav_extra_hook"
+
+[tool.setuptools.packages.find]
+include = ["multiqc_sav*"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
