@@ -9,7 +9,7 @@ description = "MultiQC plugin for Illumina SAV InterOp visualizations"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Matthias De Smet", email = "11850640+matthdsm@users.noreply.github.com"},
+    {name = "Matthias De Smet", email = "matthias.desmet@ugent.be"},
 ]
 keywords = ["bioinformatics", "illumina", "sequencing", "multiqc"]
 classifiers = [
@@ -31,9 +31,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<=3.13"
 dependencies = [
-    "interop>=1.1.23",
+    "interop>=1.7.0",
     "multiqc>=1.25",
     "pandas",
     "numpy",
@@ -55,3 +55,19 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge","bioconda"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+multiqc_sav = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+ruff = ">=0.14.8,<0.15"
+interop = ">=1.7.0,<2"
+multiqc = ">=1.32,<2"
+pandas = ">=2.3.3,<3"
+numpy = ">=2.3.5,<3"

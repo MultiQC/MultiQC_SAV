@@ -139,4 +139,7 @@ data
 
 # MacOS cruft
 .DS_Store
-workspace.code*
+workspace.code*# pixi environments
+.pixi/*
+!.pixi/config.toml
+pixi.lock
