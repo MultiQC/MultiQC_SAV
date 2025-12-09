@@ -1,0 +1,23 @@
+{
+    "name": "MultiQC_SAV Dev Container",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {},
+            "extensions": [
+                "ms-python.python",
+                "charliermarsh.ruff",
+                "GitHub.copilot"
+            ]
+        }
+    },
+    "features": {
+    },
+    "mounts": [
+        "source=${localWorkspaceFolderBasename}-pixi,target=${containerWorkspaceFolder}/.pixi,type=volume"
+    ],
+    "postCreateCommand": "sudo chown vscode .pixi && pixi install"
+}
