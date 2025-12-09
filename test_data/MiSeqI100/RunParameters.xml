@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunParameters xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Application>MiSeqi100Series Control Software</Application>
+  <SystemSuiteVersion>1.1.0.26158</SystemSuiteVersion>
+  <OutputFolder>//shares.isilon.ugent.be/cmgg_upload/MiSeqI100_SH00363/20251208_SH00363_0034_ASC2137356-SC3</OutputFolder>
+  <CustomPrimerSelections>
+    <ReadOnePrimer>false</ReadOnePrimer>
+    <ReadTwoPrimer>false</ReadTwoPrimer>
+    <IndexOnePrimer>false</IndexOnePrimer>
+    <IndexTwoPrimer>false</IndexTwoPrimer>
+  </CustomPrimerSelections>
+  <CloudUploadMode>RunMonitoring</CloudUploadMode>
+  <RunSetupMode>CloudOrchestrated</RunSetupMode>
+  <SecondaryAnalysisMode>LocalAnalysis</SecondaryAnalysisMode>
+  <InstrumentType>MiSeqi100Plus</InstrumentType>
+  <InstrumentSerialNumber>SH00363</InstrumentSerialNumber>
+  <RunId>20251208_SH00363_0034_ASC2137356-SC3</RunId>
+  <ConsumableInfo>
+    <ConsumableInfo>
+      <SerialNumber>SC2137356-SC3</SerialNumber>
+      <LotNumber>20988909</LotNumber>
+      <PartNumber>20115217</PartNumber>
+      <ExpirationDate>2026-07-18T00:00:00+02:00</ExpirationDate>
+      <Type>DryCartridge</Type>
+      <Mode>5M</Mode>
+      <Version>1</Version>
+    </ConsumableInfo>
+    <ConsumableInfo>
+      <SerialNumber>SC2156562-SC1</SerialNumber>
+      <LotNumber>20994294</LotNumber>
+      <PartNumber>20079638</PartNumber>
+      <ExpirationDate>2026-10-16T00:00:00+02:00</ExpirationDate>
+      <Type>WetCartridge</Type>
+      <Mode>A</Mode>
+      <Version>1</Version>
+    </ConsumableInfo>
+    <ConsumableInfo>
+      <SerialNumber>BXA23220-1617</SerialNumber>
+      <Type>FlowCell_1</Type>
+      <Mode>1</Mode>
+      <Version>1</Version>
+    </ConsumableInfo>
+  </ConsumableInfo>
+  <PlannedReads>
+    <Read ReadName="Index1" Cycles="8" />
+    <Read ReadName="Index2" Cycles="8" />
+    <Read ReadName="Read1" Cycles="151" />
+    <Read ReadName="Read2" Cycles="151" />
+  </PlannedReads>
+  <SecondaryAnalysisInfo>
+    <SecondaryAnalysisInfo>
+      <SecondaryAnalysisPlatformVersion>4.4.6</SecondaryAnalysisPlatformVersion>
+      <SecondaryAnalysisWorkflow>
+        <string>DRAGEN BCL Convert</string>
+      </SecondaryAnalysisWorkflow>
+    </SecondaryAnalysisInfo>
+  </SecondaryAnalysisInfo>
+  <RunCounter>34</RunCounter>
+  <RecipeName>5M/300_A_Recipe</RecipeName>
+  <RecipeVersion>2.2_IF</RecipeVersion>
+  <ExperimentName>MiSeqi100_034</ExperimentName>
+  <PurgeReagentCartridge>true</PurgeReagentCartridge>
+</RunParameters>

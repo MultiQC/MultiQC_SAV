@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<RunInfo Version="7">
+	<Run Id="20251208_SH00363_0034_ASC2137356-SC3" Number="34">
+		<Flowcell>BXA23220-1617</Flowcell>
+		<Instrument>SH00363</Instrument>
+		<Date>2025-12-08T14:14:45Z</Date>
+		<Reads>
+			<Read Number="1" NumCycles="8" IsIndexedRead="Y" IsReverseComplement="N" IsPairedEndComplete="N"/>
+			<Read Number="2" NumCycles="8" IsIndexedRead="Y" IsReverseComplement="N" IsPairedEndComplete="N"/>
+			<Read Number="3" NumCycles="151" IsIndexedRead="N" IsReverseComplement="N" IsPairedEndComplete="N"/>
+			<Read Number="4" NumCycles="151" IsIndexedRead="N" IsReverseComplement="N" IsPairedEndComplete="Y"/>
+		</Reads>
+		<FlowcellLayout LaneCount="1" SurfaceCount="1" SwathCount="9" TileCount="2">
+			<TileSet TileNamingConvention="FourDigit">
+				<Tiles>
+					<Tile>1_1101</Tile>
+					<Tile>1_1102</Tile>
+					<Tile>1_1201</Tile>
+					<Tile>1_1202</Tile>
+					<Tile>1_1301</Tile>
+					<Tile>1_1302</Tile>
+					<Tile>1_1401</Tile>
+					<Tile>1_1402</Tile>
+					<Tile>1_1501</Tile>
+					<Tile>1_1502</Tile>
+					<Tile>1_1601</Tile>
+					<Tile>1_1602</Tile>
+					<Tile>1_1701</Tile>
+					<Tile>1_1702</Tile>
+					<Tile>1_1801</Tile>
+					<Tile>1_1802</Tile>
+					<Tile>1_1901</Tile>
+					<Tile>1_1902</Tile>
+				</Tiles>
+			</TileSet>
+		</FlowcellLayout>
+		<ImageDimensions Width="858" Height="512"/>
+		<ImageChannels>
+			<Name>green</Name>
+			<Name>blue</Name>
+		</ImageChannels>
+	</Run>
+</RunInfo>
+
