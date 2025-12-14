@@ -1,16 +1,18 @@
-#!/usr/bin/env python
+"""MultiQC SAV module for parsing Illumina InterOp data."""
 
+from __future__ import annotations
+
+import contextlib
 import glob
 import logging
 import os
 import re
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
 from datetime import datetime
-from typing import Dict
+from typing import Any
 
 import interop
-import numpy
+import numpy as np
 import pandas as pd
 from interop import py_interop_plot
 from multiqc import config
@@ -18,17 +20,16 @@ from multiqc.modules.base_module import BaseMultiqcModule
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
 
-# Initialise the main MultiQC logger
 log = logging.getLogger("multiqc")
 
-HEADERS = {
+HEADERS: dict[str, dict[str, Any]] = {
     "Error Rate": {
         "title": "Error Rate (%)",
         "description": "The calculated error rate, as determined by a PhiX spike-in",
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "Error Rate 35": {
         "title": "Error Rate 35 Cycles (%)",
@@ -36,7 +37,7 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
         "hidden": True,
     },
     "Error Rate 50": {
@@ -45,7 +46,7 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
         "hidden": True,
     },
     "Error Rate 75": {
@@ -54,7 +55,7 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
         "hidden": True,
     },
     "Error Rate 100": {
@@ -63,7 +64,7 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
         "hidden": True,
     },
     "First Cycle Intensity": {
@@ -76,7 +77,7 @@ HEADERS = {
         "suffix": "%",
         "min": 0,
         "max": 100,
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "% >= Q30": {
         "title": "% >= Q30",
@@ -84,46 +85,41 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "% Occupancy Proxy": {
         "title": "Occupancy Proxy (%)",
-        # "description": "",
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "% Occupied": {
         "title": "Occupied (%)",
         "description": "The percentage of nanowells occupied by clusters, +/- 1 standard deviation.",
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "Projected Yield G": {
-        "title": "Projected Yield ({})".format(config.base_count_prefix),
-        "description": "The expected number of bases sequenced ({} base pairs over all 'usable cycles'".format(
-            config.base_count_desc
-        ),
+        "title": f"Projected Yield ({config.base_count_prefix})",
+        "description": f"The expected number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'",
         "shared_key": "base_count",
-        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,  # number is already in gigabases
+        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,
         "hidden": True,
     },
     "Yield G": {
-        "title": "Yield ({})".format(config.read_count_prefix),
-        "description": "The number of bases sequenced ({} base pairs over all 'usable cycles'".format(
-            config.base_count_desc
-        ),
+        "title": f"Yield ({config.read_count_prefix})",
+        "description": f"The number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'",
         "shared_key": "base_count",
-        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,  # number is already in gigabases
+        "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,
     },
     "Cluster Count": {
-        "title": "Clusters ({})".format(config.read_count_prefix),
-        "description": "Number of clusters for each tile ({})".format(config.read_count_desc),
+        "title": f"Clusters ({config.read_count_prefix})",
+        "description": f"Number of clusters for each tile ({config.read_count_desc})",
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
     "Cluster Count Pf": {
-        "title": "Clusters PF ({})".format(config.read_count_prefix),
-        "description": "Number of clusters PF for each tile ({})".format(config.read_count_desc),
+        "title": f"Clusters PF ({config.read_count_prefix})",
+        "description": f"Number of clusters PF for each tile ({config.read_count_desc})",
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
@@ -133,7 +129,7 @@ HEADERS = {
         "min": 0,
         "max": 100,
         "suffix": "%",
-        "format": "{:,.0f}",  # No decimal places please
+        "format": "{:,.0f}",
     },
     "Density": {
         "title": "Density",
@@ -174,28 +170,32 @@ HEADERS = {
         "hidden": True,
     },
     "Reads": {
-        "title": "{} Reads".format(config.read_count_prefix),
-        "description": "The number of reads ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} Reads",
+        "description": f"The number of reads ({config.read_count_desc})",
         "shared_key": "read_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
     "Reads Pf": {
-        "title": "{} PF Reads".format(config.read_count_prefix),
-        "description": "The number of passing filter reads ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} PF Reads",
+        "description": f"The number of passing filter reads ({config.read_count_desc})",
         "shared_key": "read_count",
         "modify": lambda x: x * config.read_count_multiplier,
     },
-    "Tile Count": {"title": "Tiles", "description": "The number of tiles per lane.", "hidden": True,},
+    "Tile Count": {
+        "title": "Tiles",
+        "description": "The number of tiles per lane.",
+        "hidden": True,
+    },
     "Total Pf Reads": {
-        "title": "{} PF Reads".format(config.read_count_prefix),
-        "description": "The total number of passing filter reads for this lane ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} PF Reads",
+        "description": f"The total number of passing filter reads for this lane ({config.read_count_desc})",
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Total Reads": {
-        "title": "{} Reads".format(config.read_count_prefix),
-        "description": "The total number of reads for this lane ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} Reads",
+        "description": f"The total number of reads for this lane ({config.read_count_desc})",
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
@@ -203,34 +203,46 @@ HEADERS = {
     "Mapped Reads Cv": {
         "title": "CV",
         "description": "The coefficient of variation for the number of counts across all indexes.",
-        "format": "{:,.2f}",  # 2 decimal places please
+        "format": "{:,.2f}",
     },
     "Max Mapped Reads": {
-        "title": "{} Max Mapped Reads".format(config.read_count_prefix),
-        "description": "The highest representation for any index ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} Max Mapped Reads",
+        "description": f"The highest representation for any index ({config.read_count_desc})",
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Min Mapped Reads": {
-        "title": "{} Min Mapped Reads".format(config.read_count_prefix),
-        "description": "The lowest representation for any index ({})".format(config.read_count_desc),
+        "title": f"{config.read_count_prefix} Min Mapped Reads",
+        "description": f"The lowest representation for any index ({config.read_count_desc})",
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
     },
     "Total Fraction Mapped Reads": {"hidden": True},
     "Fraction Mapped": {"hidden": True},
-    "Index1": {"title": "Index 1 (I7)", "description": "The sequence for the first Index Read.",},
-    "Index2": {"title": "Index 2 (I5)", "description": "The sequence for the second Index Read",},
-    "Project Name": {"title": "Project Name", "description": "Sample Project Name",},
-    "Sample Id": {"title": "Sample ID", "description": "The Sample ID given in the SampleSheet",},
+    "Index1": {
+        "title": "Index 1 (I7)",
+        "description": "The sequence for the first Index Read.",
+    },
+    "Index2": {
+        "title": "Index 2 (I5)",
+        "description": "The sequence for the second Index Read",
+    },
+    "Project Name": {
+        "title": "Project Name",
+        "description": "Sample Project Name",
+    },
+    "Sample Id": {
+        "title": "Sample ID",
+        "description": "The Sample ID given in the SampleSheet",
+    },
 }
 
 
 class SAV(BaseMultiqcModule):
     """
-    Generate SAV tables an Graphs including:
+    Generate SAV tables and graphs including:
     - GRAPH: Intensity/Cycle/Channel
     - GRAPH: Clusters/Lane
     - GRAPH: Qscore Heatmap
@@ -239,10 +251,11 @@ class SAV(BaseMultiqcModule):
     - TABLE: Run Summary
     """
 
-    def __init__(self):
-
-        super(SAV, self).__init__(
-            name="Illumina SAV", anchor="sav", info=" - Sequencing Metrics from Illumina sequencers",
+    def __init__(self) -> None:
+        super().__init__(
+            name="Illumina SAV",
+            anchor="sav",
+            info=" - Sequencing Metrics from Illumina sequencers",
         )
 
         # Set variables
@@ -264,47 +277,41 @@ class SAV(BaseMultiqcModule):
             illumina_dir = os.path.dirname(run_info_xml)
         else:
             log.debug("Skipping MultiQC_SAV, required files were not found or not in the right structure.")
-            return None
+            return
 
+        self.run_metrics: Any = None
         self.set_run_info(run_info_xml)
         self.load_metrics(illumina_dir)
         self.summary_qc()
         self.q_summary()
         self.imaging_qc()
 
-    def load_metrics(self, illumina_dir) -> None:
+    def load_metrics(self, illumina_dir: str) -> None:
+        """Load run metrics from InterOp directory."""
         log.info("Loading Run Metrics")
-        self.run_metrics = interop.read(run=illumina_dir, valid_to_load=interop.load_imaging_metrics(), finalize=True,)
+        self.run_metrics = interop.read(
+            run=illumina_dir,
+            valid_to_load=interop.load_imaging_metrics(),
+            finalize=True,
+        )
 
     #############
     # RUN INFO
     #############
 
     def set_run_info(self, run_info_xml: str) -> None:
+        """Parse and display run information from RunInfo.xml."""
         log.info("Loading Run Info")
-        run_info_xml = ET.parse(run_info_xml)
-        root = run_info_xml.getroot()
+        tree = ET.parse(run_info_xml)
+        root = tree.getroot()
 
         for run in root:
             run_number = run.attrib["Number"]
-            flowcell = [fc.text for fc in run.iter("Flowcell")][0]
-            instrument_id = [fc.text for fc in run.iter("Instrument")][0]
-            run_date = [fc.text for fc in run.iter("Date")][0]
-            try:
-                # MiSeq/NextSeq500/HiSeq3000
-                parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%y%m%d"), "%d-%m-%Y")
-            except ValueError:
-                try:
-                    # NovaSeq6000
-                    parsed_run_date = datetime.strftime(datetime.strptime(run_date, "%m/%d/%Y %I:%M:%S %p"), "%d-%m-%Y")
-                except ValueError:
-                    try:
-                        # NextSeq2000
-                        parsed_run_date = datetime.strftime(
-                            datetime.strptime(run_date, "%Y-%m-%dT%H:%M:%SZ"), "%d-%m-%Y"
-                        )
-                    except ValueError:
-                        parsed_run_date = run_date
+            flowcell = next(fc.text for fc in run.iter("Flowcell"))
+            instrument_id = next(fc.text for fc in run.iter("Instrument"))
+            run_date = next(fc.text for fc in run.iter("Date"))
+
+            parsed_run_date = self._parse_run_date(run_date)
 
             read_info = ""
             for read in run.iter("Read"):
@@ -341,16 +348,36 @@ class SAV(BaseMultiqcModule):
             """,
         )
 
+    def _parse_run_date(self, run_date: str) -> str:
+        """
+        Parse run date from various Illumina sequencer formats.
+
+        Supported formats:
+        - MiSeq/NextSeq500/HiSeq3000: YYMMDD
+        - NovaSeq6000: M/D/YYYY H:MM:SS AM/PM
+        - NextSeq2000: YYYY-MM-DDTHH:MM:SSZ
+        """
+        date_formats = [
+            ("%y%m%d", "%d-%m-%Y"),  # MiSeq/NextSeq500/HiSeq3000
+            ("%m/%d/%Y %I:%M:%S %p", "%d-%m-%Y"),  # NovaSeq6000
+            ("%Y-%m-%dT%H:%M:%SZ", "%d-%m-%Y"),  # NextSeq2000
+        ]
+
+        for input_fmt, output_fmt in date_formats:
+            try:
+                return datetime.strftime(datetime.strptime(run_date, input_fmt), output_fmt)
+            except ValueError:
+                continue
+
+        # Return raw date if no format matched
+        return run_date
+
     #############
     # SUMMARY QC
     #############
 
     def summary_qc(self) -> None:
-        """
-        Generate MultiQC sections related to Summary tables
-
-        :return: None
-        """
+        """Generate MultiQC sections related to Summary tables."""
         log.info("Gathering Read summary metrics")
         summary_read = pd.DataFrame(interop.summary(self.run_metrics, level="Read"))
         summary_nonindex = pd.DataFrame(interop.summary(self.run_metrics, level="NonIndex"))
@@ -383,29 +410,24 @@ class SAV(BaseMultiqcModule):
         )
 
     def parse_read_summary(
-        self, read_metrics: pd.DataFrame, non_index_metrics: pd.DataFrame, total_metrics: pd.DataFrame
-    ) -> Dict:
-        """
-        Parse "Read Summary" table DataFrame
+        self,
+        read_metrics: pd.DataFrame,
+        non_index_metrics: pd.DataFrame,
+        total_metrics: pd.DataFrame,
+    ) -> dict[str, dict[str, Any]]:
+        """Parse "Read Summary" table DataFrame."""
+        table_data: dict[str, dict[str, Any]] = self._parse_reads(read_metrics)
 
-        :return: Dict containing table data
-        """
-        table_data: dict = self._parse_reads(read_metrics)
-
-        for read, data in non_index_metrics.iterrows():
+        for _read, data in non_index_metrics.iterrows():
             table_data["Non-Indexed"] = data.to_dict()
 
-        for read, data in total_metrics.iterrows():
+        for _read, data in total_metrics.iterrows():
             table_data["Total"] = data.to_dict()
 
         return table_data
 
-    def read_summary_table(self, data: pd.DataFrame) -> table.plot:
-        """
-        Format "Read Summary" data dict and add plot config.
-
-        :return: table object to be used in a MultiQC section
-        """
+    def read_summary_table(self, data: dict[str, dict[str, Any]]) -> table.plot:
+        """Format "Read Summary" data dict and add plot config."""
         headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
 
         table_config = {
@@ -416,28 +438,18 @@ class SAV(BaseMultiqcModule):
 
         return table.plot(data, headers, table_config)
 
-    def parse_lane_summary(self, data: pd.DataFrame) -> Dict:
-        """
-        Parse "Lane Summary" table DataFrame
-
-        :return: Dict containing table data
-        """
+    def parse_lane_summary(self, data: pd.DataFrame) -> dict[str, dict[str, Any]]:
+        """Parse "Lane Summary" table DataFrame."""
         lanes = data.groupby("Lane")
-        table_data: dict = {}
+        table_data: dict[str, dict[str, Any]] = {}
         for lane, reads in lanes:
-            lane_data = {}
             reads_dict = self._parse_reads(reads, key_prefix=f"Lane {lane}")
             table_data.update(reads_dict)
 
         return table_data
 
-    def lane_summary_table(self, data: Dict) -> table.plot:
-        """
-        Format "Lane Summary" data dict and add plot config.
-
-        :return: table object to be used in a MultiQC section
-        """
-
+    def lane_summary_table(self, data: dict[str, dict[str, Any]]) -> table.plot:
+        """Format "Lane Summary" data dict and add plot config."""
         headers = {header: HEADERS[header] for header in interop.summary_columns(level="Lane")}
         table_config = {
             "namespace": "SAV",
@@ -445,43 +457,40 @@ class SAV(BaseMultiqcModule):
             "col1_header": "Lane - Read",
         }
 
-        return table.plot(data, headers, table_config,)
+        return table.plot(data, headers, table_config)
 
-    def clusters_lane_plot(self, data: Dict) -> bargraph.plot:
-        """
-        Format "Clusters per Lane" data dict and add plot config.
+    def clusters_lane_plot(self, data: dict[str, dict[str, Any]]) -> bargraph.plot:
+        """Format "Clusters per Lane" data dict and add plot config."""
+        cluster_data: dict[str, dict[str, float]] = {}
+        read_data: dict[str, dict[str, float]] = {}
 
-        :return: bar plot object to be used in a MultiQC section
-        """
-
-        cluster_data = {}
-        read_data = {}
-        for key, value in data.items():
+        for value in data.values():
             lane = int(value["Lane"])
-            if f"Lane {lane}" not in cluster_data:
-                cluster_data[f"Lane {lane}"] = {
+            lane_key = f"Lane {lane}"
+
+            if lane_key not in cluster_data:
+                cluster_data[lane_key] = {
                     "clusters": value["Cluster Count"],
                     "clusters_pf": value["Cluster Count Pf"],
                     "clusters_diff": value["Cluster Count"] - value["Cluster Count Pf"],
                 }
-                read_data[f"Lane {lane}"] = {
+                read_data[lane_key] = {
                     "reads": value["Reads"],
                     "reads_pf": value["Reads Pf"],
                     "reads_diff": value["Reads"] - value["Reads Pf"],
                 }
             else:
-                cluster_data[f"Lane {lane}"]["clusters"] += value["Cluster Count"]
-                cluster_data[f"Lane {lane}"]["clusters_pf"] += value["Cluster Count Pf"]
-                cluster_data[f"Lane {lane}"]["clusters_diff"] += value["Cluster Count"] - value["Cluster Count Pf"]
-                read_data[f"Lane {lane}"]["reads"] += value["Reads"]
-                read_data[f"Lane {lane}"]["reads_pf"] += value["Reads Pf"]
-                read_data[f"Lane {lane}"]["reads_diff"] += value["Reads"] - value["Reads Pf"]
+                cluster_data[lane_key]["clusters"] += value["Cluster Count"]
+                cluster_data[lane_key]["clusters_pf"] += value["Cluster Count Pf"]
+                cluster_data[lane_key]["clusters_diff"] += value["Cluster Count"] - value["Cluster Count Pf"]
+                read_data[lane_key]["reads"] += value["Reads"]
+                read_data[lane_key]["reads_pf"] += value["Reads Pf"]
+                read_data[lane_key]["reads_diff"] += value["Reads"] - value["Reads Pf"]
 
-        cats = [OrderedDict(), OrderedDict()]
-        cats[0]["clusters_pf"] = {"name": "Clusters PF"}
-        cats[0]["clusters_diff"] = {"name": "Clusters not PF"}
-        cats[1]["reads_pf"] = {"name": "Reads PF"}
-        cats[1]["reads_diff"] = {"name": "Reads not PF"}
+        cats = [
+            {"clusters_pf": {"name": "Clusters PF"}, "clusters_diff": {"name": "Clusters not PF"}},
+            {"reads_pf": {"name": "Reads PF"}, "reads_diff": {"name": "Reads not PF"}},
+        ]
 
         plot_config = {
             "id": "sav-summary-clusters-reads-lane-plot",
@@ -492,30 +501,29 @@ class SAV(BaseMultiqcModule):
 
         return bargraph.plot([cluster_data, read_data], cats, plot_config)
 
-    def _parse_reads(self, reads_df: pd.DataFrame, key_prefix: str = None) -> Dict:
-        """
-        Utility function to parse a "Reads" dataframe to dict
-
-        :return: Reads dict
-        """
-        reads_dict = {}
+    def _parse_reads(
+        self,
+        reads_df: pd.DataFrame,
+        key_prefix: str | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        """Parse a "Reads" dataframe to dict."""
+        reads_dict: dict[str, dict[str, Any]] = {}
         reads_df = reads_df.set_index("ReadNumber")
+
         for read, data in reads_df.iterrows():
             key = f"Read {read}" + " (I)" if data["IsIndex"] == 89 else f"Read {read}"
             if key_prefix:
                 key = f"{key_prefix} - {key}"
             reads_dict[key] = data.drop("IsIndex").to_dict()
+
         return reads_dict
 
     #############
     # Q SUMMARY
     #############
-    def q_summary(self) -> None:
-        """
-        Generate MultiQC sections related to Qscore
 
-        :return: None
-        """
+    def q_summary(self) -> None:
+        """Generate MultiQC sections related to Qscore."""
         # - GRAPH: Qscore Heatmap
         log.info("Generating 'Qscore Heatmap' plot")
         self.add_section(
@@ -530,28 +538,31 @@ class SAV(BaseMultiqcModule):
         self.add_section(
             name="Qscore Histogram",
             anchor="sav-qscore-histogram",
-            description="Qscore Histogram graphs the number of bases by quality score. The quality score is cumulative for the current cycle. Only bases from reads that pass the quality filter are included.",
+            description=(
+                "Qscore Histogram graphs the number of bases by quality score. "
+                "The quality score is cumulative for the current cycle. "
+                "Only bases from reads that pass the quality filter are included."
+            ),
             plot=self.qscore_histogram_plot(),
         )
 
     def qscore_heatmap_plot(self) -> heatmap.plot:
         """
-        Get heatmap data from run_metrics object
-        Note: this function has *much* room for improvement, but we need to wait for further developments in the InterOp library.
-        In the mean time, this will have to do.
+        Get heatmap data from run_metrics object.
 
-        :return: heatmap plot object to be used in a MultiQC section
+        Note: this function has room for improvement, but we need to wait
+        for further developments in the InterOp library.
         """
         options = py_interop_plot.filter_options(self.run_metrics.run_info().flowcell().naming_method())
         rows = py_interop_plot.count_rows_for_heatmap(self.run_metrics)
         cols = py_interop_plot.count_columns_for_heatmap(self.run_metrics)
-        dataBuffer = numpy.zeros((rows, cols), dtype=numpy.float32)
+        data_buffer = np.zeros((rows, cols), dtype=np.float32)
         data = py_interop_plot.heatmap_data()
-        try:
-            py_interop_plot.plot_qscore_heatmap(self.run_metrics, options, data, dataBuffer.ravel())
-        except py_interop_plot.invalid_filter_option:
-            pass
-        plot_data = dataBuffer.transpose().tolist()
+
+        with contextlib.suppress(py_interop_plot.invalid_filter_option):
+            py_interop_plot.plot_qscore_heatmap(self.run_metrics, options, data, data_buffer.ravel())
+
+        plot_data = data_buffer.transpose().tolist()
         # cycles
         x_cats = list(range(0, cols))
         # qscore
@@ -581,20 +592,20 @@ class SAV(BaseMultiqcModule):
 
     def qscore_histogram_plot(self) -> linegraph.plot:
         """
-        Get histogram data from run_metrics object
-        Note: this function has *much* room for improvement, but we need to wait for further developments in the InterOp library
-        In the mean time, this will have to do.
+        Get histogram data from run_metrics object.
 
-        :return: linegraph plot object to be used in a MultiQC section
+        Note: this function has room for improvement, but we need to wait
+        for further developments in the InterOp library.
         """
         bar_data = py_interop_plot.bar_plot_data()
         options = py_interop_plot.filter_options(self.run_metrics.run_info().flowcell().naming_method())
         py_interop_plot.plot_qscore_histogram(self.run_metrics, options, bar_data)
 
-        hist = {}
-        qscore = []
-        reads = []
-        binsize = []
+        hist: dict[float, float] = {}
+        qscore: list[float] = []
+        reads: list[float] = []
+        binsize: list[float] = []
+
         for i in range(bar_data.size()):
             qscore = [bar_data.at(i).at(j).x() for j in range(bar_data.at(i).size())]
             reads = [bar_data.at(i).at(j).y() for j in range(bar_data.at(i).size())]
@@ -604,9 +615,10 @@ class SAV(BaseMultiqcModule):
         while i < len(qscore):
             j = 0
             while j < binsize[i]:
-                hist.update({qscore[i] + j: reads[i]})
+                hist[qscore[i] + j] = reads[i]
                 j += 1
             i += 1
+
         plot_data = {bar_data.title(): hist}
 
         plot_config = {
@@ -620,14 +632,14 @@ class SAV(BaseMultiqcModule):
     #############
     # IMAGING QC
     #############
+
     def imaging_qc(self) -> None:
         """
         Generate MultiQC sections related to Imaging.
+
         This includes:
             - Plot: Intensity/Cycle/Channel
             - Plot: %Occ/%PF
-
-        :return: None
         """
         log.info("Gathering Imaging metrics")
         imaging = pd.DataFrame(interop.imaging(self.run_metrics))
@@ -641,7 +653,7 @@ class SAV(BaseMultiqcModule):
                 name="Intensity per Cycle",
                 anchor="sav-intensity-cycle",
                 description="Intensity by color and cycle of the 90% percentile of the data for each tile",
-                plot=self.intensity_cycle_plot(plot_data.get("intensity_cycle", [])),
+                plot=self.intensity_cycle_plot(plot_data.get("intensity_cycle", {})),
             )
 
         # - GRAPH: %Occ/%PF
@@ -651,48 +663,55 @@ class SAV(BaseMultiqcModule):
                 name="% PF vs % Occupied",
                 anchor="sav-imaging-pf-vs-occ",
                 description="% Clusters passing filter vs % Wells Occupied",
-                plot=self.occ_vs_pf_plot(plot_data.get("occ_vs_pf", [])),
+                plot=self.occ_vs_pf_plot(plot_data.get("occ_vs_pf", {})),
             )
 
-    def parse_imaging_table(self, data: pd.DataFrame) -> Dict:
+    def parse_imaging_table(self, data: pd.DataFrame) -> dict[str, Any]:
         """
-        Parse full imaging table DataFrame
+        Parse full imaging table DataFrame.
 
-        :return: Dict containing data for intesity per cylce plot (key:"intensity_cycle") and %occ vs %pf plot (key: ""occ_vs_pf")
+        Returns dict containing data for intensity per cycle plot (key: "intensity_cycle")
+        and %occ vs %pf plot (key: "occ_vs_pf").
         """
         # set color scale for occ_pf
         cscale = mqc_colour.mqc_colour_scale()
         colors = cscale.get_colours("Dark2")
 
         per_lane = data.groupby("Lane")
-        occ_pf = {}
-        intensity_cycle = {}
-        for lane, lane_data in per_lane:
-            lane = int(lane)
+        occ_pf: dict[str, list[dict[str, Any]]] = {}
+        intensity_cycle: dict[str, dict[int, float]] = {}
+
+        for lane_num, lane_data in per_lane:
+            lane = int(lane_num)
 
             # prep intensity_cycle
-            CHANNEL_SETS = [{"P90/RED", "P90/GREEN"}, {"P90/Red", "P90/Green"}, {"P90/G", "P90/A", "P90/T", "P90/C"}]
-            channels = set()
-            for channel_set in CHANNEL_SETS:
+            channel_sets = [
+                {"P90/RED", "P90/GREEN"},
+                {"P90/Red", "P90/Green"},
+                {"P90/G", "P90/A", "P90/T", "P90/C"},
+            ]
+            channels: set[str] = set()
+            for channel_set in channel_sets:
                 if channel_set.issubset(lane_data.columns):
                     channels = channel_set
 
             # prep occ_pf
-            if not f"Lane {lane}" in occ_pf:
-                occ_pf[f"Lane {lane}"] = []
-                prev_occ = 0
-                prev_pf = 0
+            lane_key = f"Lane {lane}"
+            if lane_key not in occ_pf:
+                occ_pf[lane_key] = []
+                prev_occ = 0.0
+                prev_pf = 0.0
 
             # parse imaging table lane
             for _, row in lane_data.iterrows():
-                # intensity_cyle
+                # intensity_cycle
                 cycle = int(row["Cycle"])
                 for channel in channels:
                     intensity = float(row[channel])
-                    if not channel in intensity_cycle:
+                    if channel not in intensity_cycle:
                         intensity_cycle[channel] = {}
-                    if not cycle in intensity_cycle[channel]:
-                        intensity_cycle[channel].update({cycle: 0})
+                    if cycle not in intensity_cycle[channel]:
+                        intensity_cycle[channel][cycle] = 0
                     intensity_cycle[channel][cycle] += intensity
 
                 # occ_pf
@@ -703,21 +722,16 @@ class SAV(BaseMultiqcModule):
                     if occ != prev_occ or pf != prev_pf:
                         prev_occ = occ
                         prev_pf = pf
-                        occ_pf[f"Lane {lane}"].append({"x": occ, "y": pf, "color": colors[lane]})
+                        occ_pf[lane_key].append({"x": occ, "y": pf, "color": colors[lane]})
                 else:
                     occ_pf = {}
 
         return {"intensity_cycle": intensity_cycle, "occ_vs_pf": occ_pf}
 
-    def intensity_cycle_plot(self, data: Dict) -> linegraph.plot:
-        """
-        Format Intensity per Cycle data dict and add plot config.
-
-        :return: linegraph plot object to be used in a MultiQC section
-        """
-
+    def intensity_cycle_plot(self, data: dict[str, dict[int, float]]) -> linegraph.plot:
+        """Format Intensity per Cycle data dict and add plot config."""
         # get keys from data
-        key_color_dict = {}
+        key_color_dict: dict[str, str] = {}
         for key in data:
             if re.match(r"\w+/red", key, re.IGNORECASE):
                 key_color_dict[key] = "red"
@@ -742,13 +756,8 @@ class SAV(BaseMultiqcModule):
 
         return linegraph.plot(data, plot_config)
 
-    def occ_vs_pf_plot(self, data: Dict) -> scatter.plot:
-        """
-        Format %Occ vs %PF data dict and add plot config.
-
-        :return: scatter plot object to be used in a MultiQC section
-        """
-
+    def occ_vs_pf_plot(self, data: dict[str, list[dict[str, Any]]]) -> scatter.plot:
+        """Format %Occ vs %PF data dict and add plot config."""
         plot_config = {
             "id": "sav-pf-vs-occ-plot",
             "title": "SAV: % Passing Filter vs % Occupied",
