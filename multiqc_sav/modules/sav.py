@@ -100,7 +100,9 @@ HEADERS: dict[str, dict[str, Any]] = {
     },
     "Projected Yield G": {
         "title": f"Projected Yield ({config.base_count_prefix})",
-        "description": f"The expected number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'",
+        "description": (
+            f"The expected number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'"
+        ),
         "shared_key": "base_count",
         "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,
         "hidden": True,
@@ -133,17 +135,24 @@ HEADERS: dict[str, dict[str, Any]] = {
     },
     "Density": {
         "title": "Density",
-        "description": "The density of clusters (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "description": (
+            "The density of clusters (in thousands per mm2) detected by image analysis, +/- 1 standard deviation."
+        ),
         "hidden": True,
     },
     "Density Pf": {
         "title": "Density PF",
-        "description": "The density of clusters PF (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "description": (
+            "The density of clusters PF (in thousands per mm2) detected by image analysis, +/- 1 standard deviation."
+        ),
         "hidden": True,
     },
     "Phasing": {
         "title": "Phasing",
-        "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing falls behind (phasing) the current cycle within a read.",
+        "description": (
+            "The value used by RTA for the percentage of molecules in a cluster "
+            "for which sequencing falls behind (phasing) the current cycle within a read."
+        ),
     },
     "Phasing Offset": {
         "title": "Phasing Offset",
@@ -157,7 +166,10 @@ HEADERS: dict[str, dict[str, Any]] = {
     },
     "Prephasing": {
         "title": "Prephasing",
-        "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing jumps ahead (prephasing) the current cycle within a read.",
+        "description": (
+            "The value used by RTA for the percentage of molecules in a cluster "
+            "for which sequencing jumps ahead (prephasing) the current cycle within a read."
+        ),
     },
     "Prephasing Offset": {
         "title": "Prephasing Offset",

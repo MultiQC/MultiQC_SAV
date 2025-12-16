@@ -65,7 +65,6 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "SIM"]
-ignore = ["E501"]  # line length handled by formatter
 
 [tool.mypy]
 ignore_missing_imports = true
