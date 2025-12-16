@@ -62,39 +62,10 @@ include = ["multiqc_sav*"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py39"
 
 [tool.ruff.lint]
-select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # pyflakes
-    "I",      # isort
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "UP",     # pyupgrade
-    "ARG",    # flake8-unused-arguments
-    "SIM",    # flake8-simplify
-]
-ignore = [
-    "E501",   # line too long (handled by formatter)
-    "B008",   # do not perform function calls in argument defaults
-    "B905",   # zip without strict parameter
-    "ARG001", # unused function argument (common in MultiQC modules)
-    "ARG002", # unused method argument
-]
-
-[tool.ruff.lint.isort]
-known-first-party = ["multiqc_sav"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
+select = ["E", "F", "W", "I", "UP", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
 
 [tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
 ignore_missing_imports = true
