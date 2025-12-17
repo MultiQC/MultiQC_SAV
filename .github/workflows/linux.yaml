@@ -27,22 +27,38 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install beautifulsoup4 multiqc
+          pip install multiqc
 
       - name: Install MultiQC_SAV
         run: pip install .
 
       - name: Test MiSeq
-        run: multiqc -m SAV test_data/MiSeq
+        run: |
+          multiqc -m SAV test_data/MiSeq -o test_output/MiSeq --strict
+          test -f test_output/MiSeq/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          test -f test_output/MiSeq/multiqc_data/multiqc.log || (echo "ERROR: Log file missing" && exit 1)
+          grep -q "SAV" test_output/MiSeq/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
       - name: Test HiSeq
-        run: multiqc -m SAV test_data/HiSeq
+        run: |
+          multiqc -m SAV test_data/HiSeq -o test_output/HiSeq --strict
+          test -f test_output/HiSeq/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/HiSeq/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
       - name: Test NextSeq500
-        run: multiqc -m SAV test_data/NextSeq500
+        run: |
+          multiqc -m SAV test_data/NextSeq500 -o test_output/NextSeq500 --strict
+          test -f test_output/NextSeq500/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NextSeq500/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
       - name: Test NextSeq2000
-        run: multiqc -m SAV test_data/NextSeq2000
+        run: |
+          multiqc -m SAV test_data/NextSeq2000 -o test_output/NextSeq2000 --strict
+          test -f test_output/NextSeq2000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NextSeq2000/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
       - name: Test NovaSeq
-        run: multiqc -m SAV test_data/NovaSeq
+        run: |
+          multiqc -m SAV test_data/NovaSeq -o test_output/NovaSeq --strict
+          test -f test_output/NovaSeq/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NovaSeq/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
