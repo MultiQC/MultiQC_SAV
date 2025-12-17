@@ -92,6 +92,7 @@ SAV = "multiqc_sav.modules.sav:SAV"
 ### Hook System
 
 `multiqc_sav.py` contains the `update_config()` hook which:
+
 - Registers the SAV module in the module order
 - Sets module tags (DNA, RNA, BCL, Demultiplex)
 - Disables the built-in InterOp module to avoid duplicate data
