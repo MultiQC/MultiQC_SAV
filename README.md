@@ -1,4 +1,10 @@
-# [<img src="docs/images/MultiQC_logo.png" width="250" title="MultiQC">](https://github.com/ewels/MultiQC)
+<h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MultiQC/MultiQC_SAV/raw/main/docs/images/MultiQC_logo_darkbg.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MultiQC/MultiQC_SAV/raw/main/docs/images/MultiQC_logo.png">
+  <img src="https://github.com/MultiQC/MultiQC_SAV/raw/main/docs/images/MultiQC_logo.png" alt="MultiQC">
+</picture>
+</h1>
 
 ![Build status](https://github.com/MultiQC/MultiQC_SAV/actions/workflows/linux.yaml/badge.svg)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/multiqc_sav/README.html)
