@@ -37,38 +37,43 @@ jobs:
 
       - name: Test MiSeq
         run: |
-          multiqc --strict -v test_data/MiSeq -o test_output/MiSeq
+          multiqc --strict test_data/MiSeq -o test_output/MiSeq
           test -f test_output/MiSeq/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test MiSeqI100
         run: |
-          multiqc --strict -v test_data/MiSeqI100 -o test_output/MiSeqI100
+          multiqc --strict test_data/MiSeqI100 -o test_output/MiSeqI100
           test -f test_output/MiSeqI100/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test HiSeq3000
         run: |
-          multiqc --strict -v test_data/HiSeq3000 -o test_output/HiSeq3000
+          multiqc --strict test_data/HiSeq3000 -o test_output/HiSeq3000
           test -f test_output/HiSeq3000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test NextSeq500
         run: |
-          multiqc --strict -v test_data/NextSeq500 -o test_output/NextSeq500
+          multiqc --strict test_data/NextSeq500 -o test_output/NextSeq500
           test -f test_output/NextSeq500/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test NextSeq2000
         run: |
-          multiqc --strict -v test_data/NextSeq2000 -o test_output/NextSeq2000
+          multiqc --strict test_data/NextSeq2000 -o test_output/NextSeq2000
           test -f test_output/NextSeq2000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test NovaSeq6000
         run: |
-          multiqc --strict -v test_data/NovaSeq6000 -o test_output/NovaSeq6000
+          multiqc --strict test_data/NovaSeq6000 -o test_output/NovaSeq6000
           test -f test_output/NovaSeq6000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
 
       - name: Test NovaSeqX
         run: |
-          multiqc --strict -v test_data/NovaSeqX -o test_output/NovaSeqX
+          multiqc --strict test_data/NovaSeqX -o test_output/NovaSeqX
           test -f test_output/NovaSeqX/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+
+      - name: Check that ignoring samples works
+        run: |
+          multiqc --strict test_data/ -o test_output/ignore_samples --ignore-samples "*"
+          test ! -f test_output/ignore_samples/multiqc_report.html || (echo "ERROR: Report should not be generated" && exit 1)
 
       - name: Upload test output
         uses: actions/upload-artifact@v4
