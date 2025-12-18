@@ -10,7 +10,7 @@ import glob
 import logging
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
 
 import interop
 import numpy as np
@@ -243,7 +243,7 @@ HEADERS: dict[str, dict] = {
 
 
 class SAVModule(BaseMultiqcModule):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="SAV",
             anchor="SAV",
@@ -251,7 +251,7 @@ class SAVModule(BaseMultiqcModule):
         )
 
 
-def add_interop_sections(module) -> None:
+def add_interop_sections(module: BaseMultiqcModule) -> None:
     """
     Add InterOp-based sections to the SAV module.
 
@@ -296,7 +296,7 @@ def add_interop_sections(module) -> None:
         break
 
 
-def _add_summary_sections(module, run_metrics) -> None:
+def _add_summary_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add read and lane summary table sections."""
     log.info("Gathering summary metrics")
 
@@ -360,7 +360,7 @@ def _add_summary_sections(module, run_metrics) -> None:
         log.debug("Could not generate lane summary: %s", e)
 
 
-def _add_qscore_sections(module, run_metrics) -> None:
+def _add_qscore_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add Q-score heatmap and histogram sections."""
     log.info("Generating Q-score plots")
 
@@ -460,7 +460,7 @@ def _add_qscore_sections(module, run_metrics) -> None:
         log.debug("Could not generate Q-score histogram: %s", e)
 
 
-def _add_imaging_sections(module, run_metrics) -> None:
+def _add_imaging_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add imaging-related sections (intensity per cycle, % PF vs % occupied)."""
     log.info("Gathering imaging metrics")
 
@@ -592,7 +592,7 @@ def _parse_imaging_table(data: pd.DataFrame) -> dict:
     return {"intensity_cycle": intensity_cycle, "occ_vs_pf": occ_pf}
 
 
-def _clusters_lane_plot(data: dict):
+def _clusters_lane_plot(data: dict) -> Any:
     """Generate clusters/reads per lane bar plot."""
     cluster_data: dict = {}
     read_data: dict = {}
@@ -633,7 +633,7 @@ def _clusters_lane_plot(data: dict):
     )
 
 
-def _intensity_cycle_plot(data: dict):
+def _intensity_cycle_plot(data: dict) -> Any:
     """Generate intensity per cycle line plot."""
     key_color_dict: dict = {}
 
@@ -663,7 +663,7 @@ def _intensity_cycle_plot(data: dict):
     )
 
 
-def _occ_vs_pf_plot(data: dict):
+def _occ_vs_pf_plot(data: dict) -> Any:
     """Generate % PF vs % Occupied scatter plot."""
     return scatter.plot(
         data,

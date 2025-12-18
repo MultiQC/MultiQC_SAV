@@ -7,7 +7,7 @@ from multiqc.utils.util_functions import update_dict
 log = logging.getLogger("multiqc")
 
 
-def sav_execution_start():
+def sav_execution_start() -> None:
     # Plugin's version number defined in pyproject.toml:
     version = importlib_metadata.version("multiqc_sav")
     log.debug(f"Running MultiQC SAV Plugin v{version}")
