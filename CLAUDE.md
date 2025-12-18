@@ -148,6 +148,7 @@ SAV = "multiqc_sav.modules.sav.sav:SAVModule"
 ## Testing
 
 Tests are run via GitHub Actions on Python 3.11, 3.12, and 3.13. Each test:
+
 1. Runs MultiQC with the SAV module on test data
 2. Verifies that `multiqc_report.html` is generated
 3. Checks that the SAV module appears in the log
