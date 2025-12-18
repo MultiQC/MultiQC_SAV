@@ -1,52 +1,75 @@
 name: "Build - Linux"
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
 
 jobs:
   run_multiqc:
     name: Linux - Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.11, 3.12, 3.13]
+        python-version: ["3.11", "3.12", "3.13"]
     timeout-minutes: 10
 
     steps:
-      # Check out MultiQC code
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Set up Python
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Update pip and install beautifulsoup4 for CI tests (CSP checking)
-      - name: Install dependencies for CI tests
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools beautifulsoup4 multiqc
+          python -m pip install --upgrade pip setuptools wheel
+          pip install multiqc
 
-      # Install MultiQC
       - name: Install MultiQC_SAV
         run: pip install .
 
-      # Run all of the tests!
-      - name: MiSeq
-        run: multiqc -m SAV test_data/MiSeq
+      - name: Test MiSeq
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/MiSeq -o test_output/MiSeq
+          test -f test_output/MiSeq/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/MiSeq/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: MiSeqI100
-        run: multiqc --strict -v --no-version-check -m SAV test_data/MiSeqI100
+      - name: Test MiSeqI100
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/MiSeqI100 -o test_output/MiSeqI100
+          test -f test_output/MiSeqI100/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/MiSeqI100/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: HiSeq3000
-        run: multiqc --strict -v --no-version-check -m SAV test_data/HiSeq3000
+      - name: Test HiSeq3000
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/HiSeq3000 -o test_output/HiSeq3000
+          test -f test_output/HiSeq3000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/HiSeq3000/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: NextSeq500
-        run: multiqc --strict -v --no-version-check -m SAV test_data/NextSeq500
+      - name: Test NextSeq500
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/NextSeq500 -o test_output/NextSeq500
+          test -f test_output/NextSeq500/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NextSeq500/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: NextSeq2000
-        run: multiqc --strict -v --no-version-check -m SAV test_data/NextSeq2000
+      - name: Test NextSeq2000
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/NextSeq2000 -o test_output/NextSeq2000
+          test -f test_output/NextSeq2000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NextSeq2000/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: NovaSeq6000
-        run: multiqc --strict -v --no-version-check -m SAV test_data/NovaSeq6000
+      - name: Test NovaSeq6000
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/NovaSeq6000 -o test_output/NovaSeq6000
+          test -f test_output/NovaSeq6000/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NovaSeq6000/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)
 
-      - name: NovaSeqX
-        run: multiqc --strict -v --no-version-check -m SAV test_data/NovaSeqX
+      - name: Test NovaSeqX
+        run: |
+          multiqc --strict -v --no-version-check -m SAV test_data/NovaSeqX -o test_output/NovaSeqX
+          test -f test_output/NovaSeqX/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+          grep -q "SAV" test_output/NovaSeqX/multiqc_data/multiqc.log || (echo "ERROR: SAV module not found in log" && exit 1)

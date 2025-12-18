@@ -40,9 +40,17 @@ dependencies = [
     "interop>=1.7.0,<2",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "ruff",
+    "pytest",
+]
+
 [project.urls]
 Homepage = "https://github.com/MultiQC/MultiQC_SAV"
 Repository = "https://github.com/MultiQC/MultiQC_SAV"
+Issues = "https://github.com/MultiQC/MultiQC_SAV/issues"
 
 [project.entry-points."multiqc.modules.v1"]
 SAV = "multiqc_sav.modules.sav.sav:SAVModule"
