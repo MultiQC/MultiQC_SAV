@@ -670,8 +670,10 @@ def _parse_imaging_table(data: pd.DataFrame) -> dict:
                 if occ != prev_occ or pf != prev_pf:
                     prev_occ = occ
                     prev_pf = pf
-                    if lane_int is not None and isinstance(lane_int, int) and lane_int < len(colors):
-                        occ_pf[f"Lane {lane_int}"].append({"x": occ, "y": pf, "color": colors[lane_int]})
+                    if lane_int is not None and isinstance(lane_int, int):
+                        # Use modulo to cycle through colors for any number of lanes
+                        color_idx = (lane_int - 1) % len(colors)
+                        occ_pf[f"Lane {lane_int}"].append({"x": occ, "y": pf, "color": colors[color_idx]})
             else:
                 occ_pf = {}
 
