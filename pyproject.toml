@@ -32,7 +32,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
 ]       
-requires-python = ">=3.9,<=3.13"
+requires-python = ">=3.9"
 dependencies = [
     "multiqc>=1.25",
     "pandas",
