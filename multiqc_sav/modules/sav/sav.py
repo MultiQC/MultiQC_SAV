@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from interop import py_interop_plot
 from multiqc import config
-from multiqc.base_module import BaseMultiqcModule
+from multiqc.base_module import BaseMultiqcModule, ModuleNoSamplesFound
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
 
@@ -32,6 +32,7 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "OrRd",
     },
     "Error Rate 35": {
         "title": "Error Rate 35 (%)",
@@ -40,6 +41,7 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "OrRd",
         "hidden": True,
     },
     "Error Rate 50": {
@@ -49,6 +51,7 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "OrRd",
         "hidden": True,
     },
     "Error Rate 75": {
@@ -58,6 +61,7 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "OrRd",
         "hidden": True,
     },
     "Error Rate 100": {
@@ -67,11 +71,13 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "OrRd",
         "hidden": True,
     },
     "First Cycle Intensity": {
         "title": "Intensity Cycle 1",
         "description": "The average of the A channel intensity measured at the first cycle",
+        "scale": "Blues",
     },
     "% Aligned": {
         "title": "Aligned (%)",
@@ -80,6 +86,7 @@ HEADERS: dict[str, dict] = {
         "min": 0,
         "max": 100,
         "format": "{:,.2f}",
+        "scale": "RdYlGn",
     },
     "% >= Q30": {
         "title": "% >= Q30",
@@ -88,23 +95,27 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "RdYlGn",
     },
     "% Occupancy Proxy": {
         "title": "Occupancy Proxy (%)",
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "Blues",
     },
     "% Occupied": {
         "title": "Occupied (%)",
         "description": "The percentage of nanowells occupied by clusters, +/- 1 standard deviation.",
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "Blues",
     },
     "Projected Yield G": {
         "title": f"Projected Yield ({config.base_count_prefix})",
         "description": f"The expected number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'",
         "shared_key": "base_count",
         "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,
+        "scale": "Greens",
         "hidden": True,
     },
     "Yield G": {
@@ -112,18 +123,21 @@ HEADERS: dict[str, dict] = {
         "description": f"The number of bases sequenced ({config.base_count_desc} base pairs over all 'usable cycles'",
         "shared_key": "base_count",
         "modify": lambda x: (x * 1000000000.0) * config.base_count_multiplier,
+        "scale": "Greens",
     },
     "Cluster Count": {
         "title": f"Clusters ({config.read_count_prefix})",
         "description": f"Number of clusters for each tile ({config.read_count_desc})",
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
+        "scale": "Blues",
     },
     "Cluster Count Pf": {
         "title": f"Clusters PF ({config.read_count_prefix})",
         "description": f"Number of clusters PF for each tile ({config.read_count_desc})",
         "shared_key": "cluster_count",
         "modify": lambda x: x * config.read_count_multiplier,
+        "scale": "Blues",
     },
     "% Pf": {
         "title": "Reads PF (%)",
@@ -132,43 +146,52 @@ HEADERS: dict[str, dict] = {
         "max": 100,
         "suffix": "%",
         "format": "{:,.2f}",
+        "scale": "RdYlGn",
     },
     "Density": {
         "title": "Density",
         "description": "The density of clusters (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "scale": "Purples",
         "hidden": True,
     },
     "Density Pf": {
         "title": "Density PF",
         "description": "The density of clusters PF (in thousands per mm2) detected by image analysis, +/- 1 standard deviation.",
+        "scale": "Purples",
         "hidden": True,
     },
     "Phasing": {
         "title": "Phasing",
         "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing falls behind (phasing) the current cycle within a read.",
+        "scale": "OrRd",
     },
     "Phasing Offset": {
         "title": "Phasing Offset",
         "description": "The best-fit offset of the phasing corrections, calculated from the entire read.",
+        "scale": "Greys",
         "hidden": True,
     },
     "Phasing Slope": {
         "title": "Phasing Slope",
         "description": "The best-fit slope of the phasing corrections, calculated from the entire read.",
+        "scale": "Greys",
         "hidden": True,
     },
     "Prephasing": {
         "title": "Prephasing",
         "description": "The value used by RTA for the percentage of molecules in a cluster for which sequencing jumps ahead (prephasing) the current cycle within a read.",
+        "scale": "OrRd",
     },
     "Prephasing Offset": {
         "title": "Prephasing Offset",
         "description": "The best-fit offset of the prephasing corrections, calculated from the entire read.",
+        "scale": "Greys",
         "hidden": True,
     },
     "Prephasing Slope": {
         "title": "Prephasing Slope",
         "description": "The best-fit slope of the prephasing corrections, calculated from the entire read.",
+        "scale": "Greys",
         "hidden": True,
     },
     "Reads": {
@@ -176,16 +199,19 @@ HEADERS: dict[str, dict] = {
         "description": f"The number of reads ({config.read_count_desc})",
         "shared_key": "read_count",
         "modify": lambda x: x * config.read_count_multiplier,
+        "scale": "Blues",
     },
     "Reads Pf": {
         "title": f"{config.read_count_prefix} PF Reads",
         "description": f"The number of passing filter reads ({config.read_count_desc})",
         "shared_key": "read_count",
         "modify": lambda x: x * config.read_count_multiplier,
+        "scale": "Blues",
     },
     "Tile Count": {
         "title": "Tiles",
         "description": "The number of tiles per lane.",
+        "scale": "Greys",
         "hidden": True,
     },
     "Total Pf Reads": {
@@ -194,6 +220,7 @@ HEADERS: dict[str, dict] = {
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
+        "scale": "Blues",
     },
     "Total Reads": {
         "title": f"{config.read_count_prefix} Reads",
@@ -201,11 +228,13 @@ HEADERS: dict[str, dict] = {
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
+        "scale": "Blues",
     },
     "Mapped Reads Cv": {
         "title": "CV",
         "description": "The coefficient of variation for the number of counts across all indexes.",
         "format": "{:,.2f}",
+        "scale": "Oranges",
     },
     "Max Mapped Reads": {
         "title": f"{config.read_count_prefix} Max Mapped Reads",
@@ -213,6 +242,7 @@ HEADERS: dict[str, dict] = {
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
+        "scale": "Blues",
     },
     "Min Mapped Reads": {
         "title": f"{config.read_count_prefix} Min Mapped Reads",
@@ -220,6 +250,7 @@ HEADERS: dict[str, dict] = {
         "modify": lambda x: float(x) * config.read_count_multiplier,
         "format": "{:,.2f}",
         "shared_key": "read_count",
+        "scale": "Blues",
     },
     "Total Fraction Mapped Reads": {"hidden": True},
     "Fraction Mapped": {"hidden": True},
@@ -243,35 +274,87 @@ HEADERS: dict[str, dict] = {
 
 
 class SAVModule(BaseMultiqcModule):
+    """
+    SAV (Sequencing Analysis Viewer) module for Illumina InterOp metrics.
+
+    This module parses InterOp binary files from Illumina sequencing runs
+    and generates quality metrics similar to Illumina's SAV application.
+
+    Supported sequencers:
+
+    - MiSeq / MiSeq (Illumina Connected)
+    - HiSeq 3000/4000
+    - NextSeq 500/550 / NextSeq 1000/2000
+    - NovaSeq 6000 / NovaSeq X/X Plus
+
+    Required files:
+
+    - `RunInfo.xml`
+    - `InterOp/*.bin` files
+    """
+
     def __init__(self) -> None:
         super().__init__(
             name="SAV",
-            anchor="SAV",
-            info=" - Illumina SAV InterOp Analysis",
+            anchor="sav",
+            href="https://github.com/Illumina/interop",
+            info="Parses Illumina InterOp binary files for sequencing run metrics.",
+            # No DOI for the InterOp library
         )
 
+        # Find run directories with RunInfo.xml
+        self.sav_data: dict = {}
+        for f in self.find_log_files("SAV/RunInfo"):
+            run_dir = os.path.dirname(f["root"])
+            run_name = os.path.basename(run_dir) if run_dir else f["s_name"]
 
-def add_interop_sections(module: BaseMultiqcModule) -> None:
+            # Check for InterOp directory
+            interop_dir = os.path.join(f["root"], "InterOp")
+            if not os.path.isdir(interop_dir):
+                log.debug(f"No InterOp directory found for {run_name}")
+                continue
+
+            interop_files = glob.glob(os.path.join(interop_dir, "*.bin"))
+            if not interop_files:
+                log.debug(f"No InterOp .bin files found for {run_name}")
+                continue
+
+            if run_name in self.sav_data:
+                log.debug(f"Duplicate run name found! Overwriting: {run_name}")
+
+            self.add_data_source(f, s_name=run_name)
+            self.add_software_version(None, sample=run_name)
+            self.sav_data[run_name] = {"_run_dir": f["root"]}
+
+        # Filter ignored samples
+        self.sav_data = self.ignore_samples(self.sav_data)
+
+        if len(self.sav_data) == 0:
+            raise ModuleNoSamplesFound
+
+        log.info(f"Found {len(self.sav_data)} sequencing run(s)")
+
+        # Add InterOp sections
+        add_interop_sections(self)
+
+        # Write data file at the END
+        self.write_data_file(self.sav_data, "multiqc_sav")
+
+
+def add_interop_sections(module: SAVModule) -> None:
     """
     Add InterOp-based sections to the SAV module.
 
     Args:
         module: The SAV MultiqcModule instance
     """
-
-    # Find the run directory from the module's data
-    for _, data in module.data_by_sample.items():
+    # Process each run found
+    for run_name, data in module.sav_data.items():
         run_dir = data.get("_run_dir")
         if not run_dir:
             continue
 
-        # Check for InterOp directory
-        interop_files = glob.glob(os.path.join(run_dir, "InterOp", "*.bin"))
-        if not interop_files:
-            log.debug("No InterOp files found in %s", run_dir)
-            continue
-
-        log.info("Loading InterOp metrics from %s", run_dir)
+        log.info(f"Loading InterOp metrics from {run_dir}")
 
         try:
             run_metrics = interop.read(
@@ -280,25 +363,28 @@ def add_interop_sections(module: BaseMultiqcModule) -> None:
                 finalize=True,
             )
         except OSError as e:
-            log.warning("Failed to load InterOp metrics from %s: %s", run_dir, str(e))
+            log.warning(f"Failed to load InterOp metrics from {run_dir}: {e}")
             continue
 
         # Add summary sections
-        _add_summary_sections(module, run_metrics)
+        _add_summary_sections(module, run_metrics, run_name)
 
         # Add Q-score sections
-        _add_qscore_sections(module, run_metrics)
+        _add_qscore_sections(module, run_metrics, run_name)
 
         # Add imaging sections
-        _add_imaging_sections(module, run_metrics)
+        _add_imaging_sections(module, run_metrics, run_name)
 
-        # Only process first run for now
-        break
+        # Store summary data for general stats
+        _store_summary_data(module, run_metrics, run_name)
+
+    # Add general stats after processing all runs
+    _add_general_stats(module)
 
 
-def _add_summary_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
+def _add_summary_sections(module: SAVModule, run_metrics: Any, run_name: str) -> None:
     """Add read and lane summary table sections."""
-    log.info("Gathering summary metrics")
+    log.info(f"Gathering summary metrics for {run_name}")
 
     try:
         summary_read = pd.DataFrame(interop.summary(run_metrics, level="Read"))
@@ -360,9 +446,9 @@ def _add_summary_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
         log.debug("Could not generate lane summary: %s", e)
 
 
-def _add_qscore_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
+def _add_qscore_sections(module: SAVModule, run_metrics: Any, run_name: str) -> None:
     """Add Q-score heatmap and histogram sections."""
-    log.info("Generating Q-score plots")
+    log.info(f"Generating Q-score plots for {run_name}")
 
     # Q-score heatmap
     try:
@@ -460,9 +546,9 @@ def _add_qscore_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
         log.debug("Could not generate Q-score histogram: %s", e)
 
 
-def _add_imaging_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
+def _add_imaging_sections(module: SAVModule, run_metrics: Any, run_name: str) -> None:
     """Add imaging-related sections (intensity per cycle, % PF vs % occupied)."""
-    log.info("Gathering imaging metrics")
+    log.info(f"Gathering imaging metrics for {run_name}")
 
     try:
         imaging = pd.DataFrame(interop.imaging(run_metrics))
@@ -598,23 +684,31 @@ def _clusters_lane_plot(data: dict) -> Any:
     read_data: dict = {}
 
     for value in data.values():
-        lane = int(value["Lane"])
+        lane = value.get("Lane")
+        if lane is None:
+            continue
+        lane = int(lane)
         lane_key = f"Lane {lane}"
+
+        cluster_count = value.get("Cluster Count", 0)
+        cluster_count_pf = value.get("Cluster Count Pf", 0)
+        reads = value.get("Reads", 0)
+        reads_pf = value.get("Reads Pf", 0)
 
         if lane_key not in cluster_data:
             cluster_data[lane_key] = {
-                "clusters_pf": value["Cluster Count Pf"],
-                "clusters_diff": value["Cluster Count"] - value["Cluster Count Pf"],
+                "clusters_pf": cluster_count_pf,
+                "clusters_diff": cluster_count - cluster_count_pf,
             }
             read_data[lane_key] = {
-                "reads_pf": value["Reads Pf"],
-                "reads_diff": value["Reads"] - value["Reads Pf"],
+                "reads_pf": reads_pf,
+                "reads_diff": reads - reads_pf,
             }
         else:
-            cluster_data[lane_key]["clusters_pf"] += value["Cluster Count Pf"]
-            cluster_data[lane_key]["clusters_diff"] += value["Cluster Count"] - value["Cluster Count Pf"]
-            read_data[lane_key]["reads_pf"] += value["Reads Pf"]
-            read_data[lane_key]["reads_diff"] += value["Reads"] - value["Reads Pf"]
+            cluster_data[lane_key]["clusters_pf"] += cluster_count_pf
+            cluster_data[lane_key]["clusters_diff"] += cluster_count - cluster_count_pf
+            read_data[lane_key]["reads_pf"] += reads_pf
+            read_data[lane_key]["reads_diff"] += reads - reads_pf
 
     cats = [
         {"clusters_pf": {"name": "Clusters PF"}, "clusters_diff": {"name": "Clusters not PF"}},
@@ -678,3 +772,79 @@ def _occ_vs_pf_plot(data: dict) -> Any:
             "ymax": 100,
         },
     )
+
+
+def _store_summary_data(module: SAVModule, run_metrics: Any, run_name: str) -> None:
+    """Store summary data in module.sav_data for general stats and data export."""
+    try:
+        summary_total = pd.DataFrame(interop.summary(run_metrics, level="Total"))
+        if not summary_total.empty:
+            # Get total row data
+            total_data = summary_total.iloc[0].to_dict()
+            # Store relevant metrics
+            module.sav_data[run_name].update(
+                {
+                    "% >= Q30": total_data.get("% >= Q30"),
+                    "Yield G": total_data.get("Yield G"),
+                    "% Pf": total_data.get("% Pf"),
+                    "Error Rate": total_data.get("Error Rate"),
+                    "Cluster Count": total_data.get("Cluster Count"),
+                    "Cluster Count Pf": total_data.get("Cluster Count Pf"),
+                }
+            )
+    except (ValueError, TypeError) as e:
+        log.debug(f"Could not store summary data for {run_name}: {e}")
+
+
+def _add_general_stats(module: SAVModule) -> None:
+    """Add key metrics to the general statistics table."""
+    # Prepare data for general stats (exclude internal keys starting with _)
+    gs_data = {}
+    for run_name, data in module.sav_data.items():
+        gs_data[run_name] = {k: v for k, v in data.items() if not k.startswith("_") and v is not None}
+
+    if not gs_data:
+        return
+
+    headers = {
+        "% >= Q30": {
+            "title": "% >= Q30",
+            "description": "Percentage of reads with quality score >= 30",
+            "min": 0,
+            "max": 100,
+            "suffix": "%",
+            "scale": "RdYlGn",
+            "format": "{:,.2f}",
+        },
+        "Yield G": {
+            "title": f"Yield ({config.base_count_prefix})",
+            "description": f"Total yield ({config.base_count_desc})",
+            "shared_key": "base_count",
+            "scale": "Blues",
+            "modify": lambda x: (x * 1e9) * config.base_count_multiplier,
+        },
+        "% Pf": {
+            "title": "% PF",
+            "description": "Percentage of clusters passing filter",
+            "min": 0,
+            "max": 100,
+            "suffix": "%",
+            "scale": "RdYlGn",
+            "format": "{:,.2f}",
+            "hidden": True,
+        },
+        "Error Rate": {
+            "title": "Error %",
+            "description": "Error rate as determined by PhiX spike-in",
+            "min": 0,
+            "max": 100,
+            "suffix": "%",
+            "scale": "OrRd",
+            "format": "{:,.2f}",
+            "hidden": True,
+        },
+    }
+
+    headers = module.get_general_stats_headers(all_headers=headers)
+    if headers:
+        module.general_stats_addcols(gs_data, headers, namespace="sav")
