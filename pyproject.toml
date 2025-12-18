@@ -65,7 +65,7 @@ include = ["multiqc_sav*"]
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "UP", "SIM"]
 ignore = ["E501"]
 
 [tool.pixi.workspace]
