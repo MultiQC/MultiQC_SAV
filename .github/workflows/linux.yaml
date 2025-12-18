@@ -33,7 +33,7 @@ jobs:
         run: pip install .
 
       - name: Make test output dir
-        run: mkdir test_data
+        run: mkdir test_output
 
       - name: Test MiSeq
         run: |
@@ -69,3 +69,11 @@ jobs:
         run: |
           multiqc --strict -v test_data/NovaSeqX -o test_output/NovaSeqX
           test -f test_output/NovaSeqX/multiqc_report.html || (echo "ERROR: Report not generated" && exit 1)
+
+      - name: Upload test output
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-output-py${{ matrix.python-version }}
+          path: test_output/
+          retention-days: 7
