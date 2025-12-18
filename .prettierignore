@@ -1,0 +1,30 @@
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Test data
+test_data/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Coverage
+htmlcov/
+.coverage
+
+# IDE
+.idea/
+.vscode/
+
+# Example reports
+docs/example/
+
+# Lock files
+*.lock

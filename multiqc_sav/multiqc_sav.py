@@ -6,11 +6,11 @@ from multiqc.utils.util_functions import update_dict
 
 log = logging.getLogger("multiqc")
 
-def sav_execution_start():
 
+def sav_execution_start() -> None:
     # Plugin's version number defined in pyproject.toml:
     version = importlib_metadata.version("multiqc_sav")
-    log.debug("Running MultiQC SAV Plugin v{}".format(version))
+    log.debug(f"Running MultiQC SAV Plugin v{version}")
 
     log.debug("SAV - Updating config")
     # Add module to module order
@@ -30,9 +30,10 @@ def sav_execution_start():
     update_dict(config.sp, {"bclconvert/runinfo": {"fn": "RunInfo.xml", "shared": True}})
     # Set SAV file search patterns
     update_dict(
-        config.sp, {
+        config.sp,
+        {
             "SAV/RunInfo": {"fn": "RunInfo.xml", "shared": True},
             "SAV/RunParameters": {"fn": "RunParameters.xml", "shared": True},
-            "SAV/InterOp": {"fn_re": "InterOp/.*\\.bin"}
-        }
+            "SAV/InterOp": {"fn_re": "InterOp/.*\\.bin"},
+        },
     )

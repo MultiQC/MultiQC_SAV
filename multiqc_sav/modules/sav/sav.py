@@ -5,25 +5,26 @@ This module provides functions to parse Illumina InterOp binary files
 and generate advanced visualizations.
 """
 
+import contextlib
 import glob
 import logging
 import os
 import re
-from typing import Dict, List, Optional
+from typing import Any, Optional
 
 import interop
 import numpy as np
 import pandas as pd
 from interop import py_interop_plot
 from multiqc import config
-from multiqc.base_module import BaseMultiqcModule, ModuleNoSamplesFound
+from multiqc.base_module import BaseMultiqcModule
 from multiqc.plots import bargraph, heatmap, linegraph, scatter, table
 from multiqc.utils import mqc_colour
 
 log = logging.getLogger(__name__)
 
 # Table headers for summary metrics
-HEADERS: Dict[str, Dict] = {
+HEADERS: dict[str, dict] = {
     "Error Rate": {
         "title": "Error Rate (%)",
         "description": "The calculated error rate, as determined by a PhiX spike-in",
@@ -240,15 +241,17 @@ HEADERS: Dict[str, Dict] = {
     },
 }
 
+
 class SAVModule(BaseMultiqcModule):
-    def __init__(self):
-        super(SAVModule, self).__init__(
+    def __init__(self) -> None:
+        super().__init__(
             name="SAV",
             anchor="SAV",
             info=" - Illumina SAV InterOp Analysis",
         )
 
-def add_interop_sections(module) -> None:
+
+def add_interop_sections(module: BaseMultiqcModule) -> None:
     """
     Add InterOp-based sections to the SAV module.
 
@@ -293,7 +296,7 @@ def add_interop_sections(module) -> None:
         break
 
 
-def _add_summary_sections(module, run_metrics) -> None:
+def _add_summary_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add read and lane summary table sections."""
     log.info("Gathering summary metrics")
 
@@ -357,7 +360,7 @@ def _add_summary_sections(module, run_metrics) -> None:
         log.debug("Could not generate lane summary: %s", e)
 
 
-def _add_qscore_sections(module, run_metrics) -> None:
+def _add_qscore_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add Q-score heatmap and histogram sections."""
     log.info("Generating Q-score plots")
 
@@ -371,10 +374,8 @@ def _add_qscore_sections(module, run_metrics) -> None:
             data_buffer = np.zeros((rows, cols), dtype=np.float32)
             data = py_interop_plot.heatmap_data()
 
-            try:
+            with contextlib.suppress(py_interop_plot.invalid_filter_option):
                 py_interop_plot.plot_qscore_heatmap(run_metrics, options, data, data_buffer.ravel())
-            except py_interop_plot.invalid_filter_option:
-                pass
 
             # data_buffer shape is (rows=qscores, cols=cycles)
             # heatmap expects: rows match ycats, cols match xcats
@@ -421,10 +422,10 @@ def _add_qscore_sections(module, run_metrics) -> None:
         options = py_interop_plot.filter_options(run_metrics.run_info().flowcell().naming_method())
         py_interop_plot.plot_qscore_histogram(run_metrics, options, bar_data)
 
-        hist: Dict = {}
-        qscore: List = []
-        reads: List = []
-        binsize: List = []
+        hist: dict = {}
+        qscore: list = []
+        reads: list = []
+        binsize: list = []
 
         for i in range(bar_data.size()):
             qscore = [bar_data.at(i).at(j).x() for j in range(bar_data.at(i).size())]
@@ -459,7 +460,7 @@ def _add_qscore_sections(module, run_metrics) -> None:
         log.debug("Could not generate Q-score histogram: %s", e)
 
 
-def _add_imaging_sections(module, run_metrics) -> None:
+def _add_imaging_sections(module: BaseMultiqcModule, run_metrics: Any) -> None:
     """Add imaging-related sections (intensity per cycle, % PF vs % occupied)."""
     log.info("Gathering imaging metrics")
 
@@ -492,9 +493,9 @@ def _parse_read_summary(
     read_metrics: pd.DataFrame,
     non_index_metrics: pd.DataFrame,
     total_metrics: pd.DataFrame,
-) -> Dict:
+) -> dict:
     """Parse read summary DataFrames into dict format."""
-    table_data: Dict = _parse_reads(read_metrics)
+    table_data: dict = _parse_reads(read_metrics)
 
     for _, data in non_index_metrics.iterrows():
         table_data["Non-Indexed"] = data.to_dict()
@@ -505,10 +506,10 @@ def _parse_read_summary(
     return table_data
 
 
-def _parse_lane_summary(data: pd.DataFrame) -> Dict:
+def _parse_lane_summary(data: pd.DataFrame) -> dict:
     """Parse lane summary DataFrame into dict format."""
     lanes = data.groupby("Lane")
-    table_data: Dict = {}
+    table_data: dict = {}
 
     for lane, reads in lanes:
         reads_dict = _parse_reads(reads, key_prefix=f"Lane {lane}")
@@ -517,9 +518,9 @@ def _parse_lane_summary(data: pd.DataFrame) -> Dict:
     return table_data
 
 
-def _parse_reads(reads_df: pd.DataFrame, key_prefix: Optional[str] = None) -> Dict:
+def _parse_reads(reads_df: pd.DataFrame, key_prefix: Optional[str] = None) -> dict:
     """Utility function to parse a reads DataFrame to dict."""
-    reads_dict: Dict = {}
+    reads_dict: dict = {}
     reads_df = reads_df.set_index("ReadNumber")
 
     for read, data in reads_df.iterrows():
@@ -531,14 +532,14 @@ def _parse_reads(reads_df: pd.DataFrame, key_prefix: Optional[str] = None) -> Di
     return reads_dict
 
 
-def _parse_imaging_table(data: pd.DataFrame) -> Dict:
+def _parse_imaging_table(data: pd.DataFrame) -> dict:
     """Parse imaging table DataFrame for intensity and occupancy plots."""
     cscale = mqc_colour.mqc_colour_scale()
     colors = cscale.get_colours("Dark2")
 
     per_lane = data.groupby("Lane")
-    occ_pf: Dict = {}
-    intensity_cycle: Dict = {}
+    occ_pf: dict = {}
+    intensity_cycle: dict = {}
 
     for lane, lane_data in per_lane:
         lane_int = None
@@ -591,10 +592,10 @@ def _parse_imaging_table(data: pd.DataFrame) -> Dict:
     return {"intensity_cycle": intensity_cycle, "occ_vs_pf": occ_pf}
 
 
-def _clusters_lane_plot(data: Dict):
+def _clusters_lane_plot(data: dict) -> Any:
     """Generate clusters/reads per lane bar plot."""
-    cluster_data: Dict = {}
-    read_data: Dict = {}
+    cluster_data: dict = {}
+    read_data: dict = {}
 
     for value in data.values():
         lane = int(value["Lane"])
@@ -632,9 +633,9 @@ def _clusters_lane_plot(data: Dict):
     )
 
 
-def _intensity_cycle_plot(data: Dict):
+def _intensity_cycle_plot(data: dict) -> Any:
     """Generate intensity per cycle line plot."""
-    key_color_dict: Dict = {}
+    key_color_dict: dict = {}
 
     for key in data:
         if re.match(r"\w+/red", key, re.IGNORECASE):
@@ -662,7 +663,7 @@ def _intensity_cycle_plot(data: Dict):
     )
 
 
-def _occ_vs_pf_plot(data: Dict):
+def _occ_vs_pf_plot(data: dict) -> Any:
     """Generate % PF vs % Occupied scatter plot."""
     return scatter.plot(
         data,
