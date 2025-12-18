@@ -1,3 +1,6 @@
+multiqc_data*
+multiqc_report*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
