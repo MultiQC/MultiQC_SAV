@@ -1,6 +1,3 @@
-multiqc_data*
-multiqc_report*
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -131,10 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
 # multiqc tests
 multiqc_report.html
-multiqc_data
+multiqc_data*
+multiqc_plots*
+multiqc_report*
 
 # test data
 test
@@ -142,7 +140,9 @@ data
 
 # MacOS cruft
 .DS_Store
-workspace.code*# pixi environments
+workspace.code*
+
+# pixi environments
 .pixi/*
 !.pixi/config.toml
 pixi.lock
